@@ -1,3 +1,12 @@
+# Personalized
+env
+venv  
+prove
+prove/
+update_tree_readme.sh
+
+# Defaults
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
