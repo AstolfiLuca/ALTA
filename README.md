@@ -29,8 +29,7 @@ Check out the LaTeX (W.I.P.):
     https://www.overleaf.com/read/tsnmfyhgxrmn#13d593
 
 ## Credits
-
-W.I.P.
+All resources in the "academic_resourses" folder belong to the orinal authors of the papers, nothing is mine.
 
 ## Structure
 <!-- FILETREE START -->
