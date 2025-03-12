@@ -1,9 +1,20 @@
 # Personalized
 env
 venv  
-prove
 prove/
 update_tree_readme.sh
+
+LaTeX/Apprenticeship/*
+!LaTeX/Apprenticeship/LaTeX/Apprenticeship.pdf
+!LaTeX/Apprenticeship/LaTeX/Apprenticeship.LaTeX
+!LaTeX/Apprenticeship/LaTeX/Apprenticeship.bib
+
+LaTeX/Thesis/*
+!LaTeX/Thesis/LaTeX/Thesis.pdf
+!LaTeX/Thesis/LaTeX/Thesis.LaTeX
+!LaTeX/Thesis/LaTeX/Thesis.bib
+
+#LaTeX/Apprenticeship/Apprenticeship.aux
 
 # Defaults
 
