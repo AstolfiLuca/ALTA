@@ -40,12 +40,17 @@ All resources in the "academic_resourses" folder belong to the orinal authors of
 │   ├── 2 - MOO_theory_and_practice_II.pdf
 │   ├── 3 - MJ_in_a_nut.pdf
 │   ├── old_papers
-│   ├── resources.txt
+│   ├── resources.md
 │   └── unimore_related 
 ├── .gitignore
+├── img
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── src
+    ├── main.py
+    ├── scripts
+    └── test
 
-4 directories, 7 files
+8 directories, 14 files
 ```
 <!-- FILETREE END -->
