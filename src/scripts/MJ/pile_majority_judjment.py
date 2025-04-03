@@ -1,63 +1,64 @@
-# O(mnlogm) nel caso peggiore O(m^2 * n)
-
 import numpy as np
+
 from collections import deque 
 
-def majority_judment(phi_matrix, reversed=False):
-    phi_matrix = np.sort(np.array(phi_matrix), axis=1) #[:, ::-1] # Trasformo phi_matrix in matrice numpy ed Ordino riga per riga (dal più grande al più piccolo)
+def majority_judment(phi_matrix, gen=None, increasing=False, limit=None):
+    phi_matrix = np.array(phi_matrix)
+    
+    leaderboard = [] 
 
-    leaderboard = [] # Creo la leaderboard
+    previous_candidates = None
 
-    pila = deque()
+    phi_matrix = np.sort(phi_matrix, axis=1) # c * j * log(j)
 
-    pila.append(list(range(phi_matrix.shape[0])))
+    pile = deque()
+    pile.append(list(range(phi_matrix.shape[0]))) # All candidates
 
-    candidati_precedenti = None
+    while pile:
+        selected_candidates = pile.pop()
 
-    while pila:
-        candidati_selezionati = pila.pop()
+        # print(f"candidati precedenti: {previous_candidates}")
+        # print(f"candidati selezionati: {selected_candidates}")
 
-        # print(f"candidati precedenti: {candidati_precedenti}")
-        # print(f"candidati selezionati: {candidati_selezionati}")
-
-        if len(candidati_selezionati) == 1:
-            leaderboard.append(candidati_selezionati[0])
+        if len(selected_candidates) == 1:
+            leaderboard.append(selected_candidates[0])
             # print(f"leaderboard: {leaderboard}")
             continue
 
-        if candidati_selezionati != candidati_precedenti:
-            tmp_matrix = phi_matrix[candidati_selezionati]
+        if selected_candidates != previous_candidates:
+            tmp_matrix = phi_matrix[selected_candidates]
         else:
-            tmp_matrix = np.delete(tmp_matrix, middle_index, axis=1) 
+            tmp_matrix = np.delete(tmp_matrix, middle_index, axis=1)
+            if tmp_matrix.size == 0: # DUE CANDIDATI SONO ESATTAMENTE IDENTICI
+                leaderboard.append(selected_candidates[0])
+                continue
 
-        N = tmp_matrix.shape[1] # Ottengo il numero di votanti (dimensione della riga / numero di colonne)
-
-        middle_index = N // 2
+        middle_index = tmp_matrix.shape[1] // 2 
+        if gen == 4:
+            print(tmp_matrix)
         middle_column = tmp_matrix[:, middle_index]
-
+        
         votes = {}
-        for judje_vote, candidate in zip(middle_column, candidati_selezionati):
+        for judje_vote, candidate in zip(middle_column, selected_candidates): # c
             if judje_vote not in votes:
                 votes[judje_vote] = []
 
             votes[judje_vote].append(candidate)
 
-        votes = sorted(votes.items(), reverse=reversed)
+        votes = sorted(votes.items(), reverse=increasing)
 
-
-        for vote in votes:
-            pila.append(vote[1])
-
-
+        for vote in votes: # n = number of grades/votes (worst case)
+            pile.append(vote[1]) # candidate list of a certain vote
+        
         # print(f"tmp_matrix: \n{tmp_matrix}")
         # print(f"N: {N}")
         # print(f"middle_index: {middle_index}")
         # print(f"middle_column: {middle_column}")
         # print(f"votes: {votes}")
-        # print(f"pila: {pila}")
-        # print(f"ultimo: {pila[-1]}")
+        # print(f"pile: {pile}")
+        # print(f"ultimo: {pile[-1]}")
         # print("\n\n")
 
-        candidati_precedenti = candidati_selezionati
+        previous_candidates = selected_candidates
 
-    return leaderboard
+    return leaderboard[:None]

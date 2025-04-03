@@ -32,6 +32,7 @@ plt.scatter(nF[:, 0], nF[:, 1], s=30, facecolors='none', edgecolors='blue')
 plt.title("Objective Space")
 plt.show()
 
+# Decomposition function
 
 weights = np.array([0.2, 0.8]) # Scelgo dei pesi in base al mio volere (il peso di ogni funzione, 0.2 per f1 e 0.8 per f2)
 
