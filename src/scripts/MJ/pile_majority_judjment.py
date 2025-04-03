@@ -29,7 +29,7 @@ def majority_judment(phi_matrix, increasing=False, limit=None):
             tmp_matrix = phi_matrix[selected_candidates]
         else:
             tmp_matrix = np.delete(tmp_matrix, middle_index, axis=1)
-            if tmp_matrix.size == 0: # DUE CANDIDATI SONO ESATTAMENTE IDENTICI
+            if tmp_matrix.size == 0: # Two candidate have identical functions values
                 leaderboard.append(selected_candidates[0])
                 continue
 

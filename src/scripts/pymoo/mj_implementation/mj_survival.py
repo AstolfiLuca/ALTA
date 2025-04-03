@@ -17,18 +17,17 @@ class ParetoSurvival(Survival):
 
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
-        print(f"\n{gen}: ") 
+        print(f"{gen}: ") 
 
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
-        F_candidate_sorted = np.argsort(F, axis=0)# Ordino 
+        F_candidate_sorted = np.argsort(F, axis=0) # Ordino 
         
         leaderboard = self.MJ_type(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
         # print(leaderboard)
         # print(leaderboard[:n_survive]) # Solo indici dei sopravvissuti, dal migliore al peggiore
         
-
         result = NonDominatedSorting().do(F, return_rank=True)
                 
         fronts, rank = result

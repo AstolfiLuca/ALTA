@@ -7,115 +7,97 @@ from pymoo.problems import get_problem
 # --- Majority Judjment --- 
 from scripts.MJ.standard_majority_judjment import majority_judgment as standard_MJ
 
-# --- New Majority Judjment Algorithm--- 
+# --- New Majority Judjment---
 from scripts.MJ.pile_majority_judjment import majority_judment as pile_MJ
-
-# --- Test Phi Matrix ---
-from test.test import get_phi_matrix_1, get_phi_matrix_2
-
-# --- New PyMoo Survival With Majority judjment---
 from scripts.pymoo.mj_implementation.mj_survival import ParetoSurvival
 
 # --- Test PyMoo ---
+from test.test import get_phi_matrix_1, get_phi_matrix_2
 from test.pymoo.multi_obj_problem import MultiObjectiveProblem
 
 
+def get_results(problem, algorithms, termination, seed=1):
+    results = {}
+
+    for name, algorithm in algorithms.items():
+        results[name] = minimize(
+            problem, 
+            algorithm, 
+            termination, 
+            seed=seed
+        )
+
+    return results
+    
+def print_results(results, title="default_title", scatter=True, radvis=True):
+    assert results, "Results Dict is Empty"
+    
+    assert (scatter or radvis), "It is necessary to choose a specific plot"
+     
+    n_res = len(results)
+
+    import colorsys
+    colors = [colorsys.hsv_to_rgb(i / n_res, 1, 1) for i in range(n_res)]
+
+    if scatter:
+        plot = Scatter(title=title)
+
+        for index, (name, result) in zip(range(n_res), results.items()):
+            plot.add(result.F, color=colors[index], edgecolor="black", label=name)
+
+        plot.show()
+
+    if radvis and n_res > 1:
+        from pymoo.visualization.radviz import Radviz
+        from pymoo.util.normalization import normalize
+
+        F_normalizer = list(results.values())[0]
+        
+        F_normalized = []
+        for res_F in results.values():
+            F_normalized.append(normalize(res_F.F, xl=F_normalizer.F.min(axis=0), xu=F_normalizer.F.max(axis=0)))
+
+
+        plot = Radviz()
+        for index, name, F_norm in zip(range(n_res), results.keys(), F_normalized):
+            plot.add(F_norm, label=name, color=colors[index])
+
+        plot.show()
+
 if __name__ == "__main__":
-    print(pile_MJ(get_phi_matrix_1(), increasing=True))
-    #print(standard_MJ(get_phi_matrix_2()))
+    pop_size = 100
+    n_gen = 50
+    problem_name = "dtlz1"
+
+    problem = get_problem(problem_name)
     
     algorithm_pile_MJ = NSGA2(
-        pop_size=100,
+        pop_size=pop_size,
         survival=ParetoSurvival(use_MJ_pile=True)
     )
 
     algorithm_standard_MJ = NSGA2(
-        pop_size=100,
+        pop_size=pop_size,
         survival=ParetoSurvival(use_MJ_pile=False)
     )
     
     algorithm_NSGA2 = NSGA2(
-        pop_size=100
+        pop_size=pop_size
     )
 
-    termination = get_termination("n_gen", 50)
+    algorithms = {
+        "pile_MJ": algorithm_pile_MJ,
+        "standard_MJ": algorithm_standard_MJ,
+        "NSGA2": algorithm_NSGA2
+    }
 
-    """
-    res = minimize(
-        MultiObjectiveProblem(), 
-        algorithm_MJ, 
-        termination, 
-        seed=1
-    )
-   
-    plot = Scatter(title="Majority Judjment")
-    plot.add(res.F, color="red", edgecolor="black", label="Majority Judjment")
-    plot.show()
+    termination = get_termination("n_gen", n_gen)
 
-    # --- Normal NSGA2 (Custom problem) 
+    results = get_results(problem, algorithms, termination)
 
-    res = minimize(
-        MultiObjectiveProblem(), 
-        algorithm_NSGA2, 
-        termination, 
-        seed=1
-    )
-   
-    plot = Scatter(title="Majority Judjment")
-    plot.add(res.F, color="red", edgecolor="black", label="Majority Judjment")
-    plot.show()
-    """
+    print_results(results, title=problem_name, scatter=False)
 
-    problem = get_problem("dtlz1")
-
-    print(problem.n_obj)
-
-    res_pile_MJ = minimize(
-        problem, 
-        algorithm_pile_MJ, 
-        termination, 
-        seed=1
-    )
-
-    res_standard_MJ = minimize(
-        problem, 
-        algorithm_standard_MJ, 
-        termination, 
-        seed=1
-    )
-
-    res_NSGA2 = minimize(
-        problem, 
-        algorithm_NSGA2, 
-        termination, 
-        seed=1
-    )
-   # plot = Scatter(title="Majority Judjment")
-    # plot.add(res.F, color="red", edgecolor="black", label="Majority Judjment")
-    # plot.show()
-
-    # plot = Scatter(title="Majority Judjment")
-    # plot.add(res.F, color="red", edgecolor="black", label="Majority Judjment")
-    # plot.show()
-
-    from pymoo.visualization.radviz import Radviz
-    from pymoo.util.normalization import normalize
-
-    F_pile_MJ = res_pile_MJ.F
-    F_standard_MJ = res_standard_MJ.F
-    F_NSGA2 = res_NSGA2.F
-
-    # Normalizzazione dei dati per RadViz
-    F_pile_MJ_normalized = normalize(F_pile_MJ)
-    F_standard_MJ_normalized = normalize(F_standard_MJ, xl=F_pile_MJ.min(axis=0), xu=F_pile_MJ.max(axis=0))
-    F_NSGA2_normalized = normalize(F_NSGA2, xl=F_pile_MJ.min(axis=0), xu=F_pile_MJ.max(axis=0))
-
-    # Visualizzazione con RadViz
-    plot = Radviz()
-    plot.add(F_pile_MJ_normalized, label="Pile Majority Judgment", color="red")
-    plot.add(F_standard_MJ_normalized, label="Standard Majority Judgment", color="green")
-    plot.add(F_NSGA2_normalized, label="NSGA-II", color="blue")
-    plot.show()
+    
 
 
 
