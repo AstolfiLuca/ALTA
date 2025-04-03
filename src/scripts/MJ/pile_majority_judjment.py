@@ -2,7 +2,7 @@ import numpy as np
 
 from collections import deque 
 
-def majority_judment(phi_matrix, gen=None, increasing=False, limit=None):
+def majority_judment(phi_matrix, increasing=False, limit=None):
     phi_matrix = np.array(phi_matrix)
     
     leaderboard = [] 
@@ -34,8 +34,6 @@ def majority_judment(phi_matrix, gen=None, increasing=False, limit=None):
                 continue
 
         middle_index = tmp_matrix.shape[1] // 2 
-        if gen == 4:
-            print(tmp_matrix)
         middle_column = tmp_matrix[:, middle_index]
         
         votes = {}

@@ -11,18 +11,22 @@ from scripts.MJ.pile_majority_judjment import majority_judment as pile_MJ
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
 class ParetoSurvival(Survival):
+    def __init__(self, filter_infeasible=True, use_MJ_pile=True):
+        super().__init__(filter_infeasible)
+        self.MJ_type = pile_MJ if use_MJ_pile else standard_MJ  
+
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
-        print(f"\n{gen}:") 
+        print(f"\n{gen}: ") 
 
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
         F_candidate_sorted = np.argsort(F, axis=0)# Ordino 
         
-        leaderboard = pile_MJ(F_candidate_sorted, gen)
+        leaderboard = self.MJ_type(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
-        print(leaderboard)
-        print(leaderboard[:n_survive]) # Solo indici dei sopravvissuti, dal migliore al peggiore
+        # print(leaderboard)
+        # print(leaderboard[:n_survive]) # Solo indici dei sopravvissuti, dal migliore al peggiore
         
 
         result = NonDominatedSorting().do(F, return_rank=True)

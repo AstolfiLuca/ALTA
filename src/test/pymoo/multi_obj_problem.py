@@ -17,3 +17,5 @@ class MultiObjectiveProblem(Problem):
         f2 = (X[:, 0] - 2)**2 + (X[:, 1] - 2)**2
         
         out["F"] = np.column_stack([f1, f2])
+
+
