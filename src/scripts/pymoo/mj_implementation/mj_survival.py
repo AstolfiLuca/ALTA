@@ -2,11 +2,11 @@ import numpy as np
 
 from pymoo.core.survival import Survival
 
-# --- Majority Judjment --- 
-from scripts.MJ.standard_majority_judjment import majority_judgment as standard_MJ
+# --- Majority Judgment --- 
+from scripts.MJ.standard_majority_judgment import majority_judgment as standard_MJ
 
-# --- New Majority Judjment Algorithm--- 
-from scripts.MJ.pile_majority_judjment import majority_judment as pile_MJ
+# --- New Majority Judgment Algorithm--- 
+from scripts.MJ.pile_majority_judgment import majority_judgment as pile_MJ
 
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
@@ -18,7 +18,7 @@ class ParetoSurvival(Survival):
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
         print(f"{gen}: ") 
-
+        
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
         F_candidate_sorted = np.argsort(F, axis=0) # Ordino 
@@ -38,7 +38,8 @@ class ParetoSurvival(Survival):
 
         pop.set("crowding", crowding)
 
-        return pop[leaderboard]
+
+        return pop[leaderboard[:n_survive]]
         
         """
         # Calcola la crowding distance per ciascun fronte (per avere soluzioni molto sparse, no overlap)
@@ -60,7 +61,7 @@ class ParetoSurvival(Survival):
             
             # Assign the computed crowding to the main array
             crowding[front] = front_crowding
-
+        
         pop.set("crowding", crowding)
         
         survivors = []
