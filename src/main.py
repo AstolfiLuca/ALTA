@@ -24,7 +24,7 @@ def get_results(problem, algorithms, termination, seed=1):
 
     return results
     
-def print_results(results, title="default_title", scatter=False, radviz=True, multi_problems=False, save_file=False):
+def print_results(results, title="default_title", scatter=False, radviz=False, ax=None, save_file=False):
     assert results, "Results Dict is Empty"
     
     assert (scatter or radviz), "It is necessary to choose a specific plot"
@@ -37,7 +37,7 @@ def print_results(results, title="default_title", scatter=False, radviz=True, mu
     if scatter:
         from pymoo.visualization.scatter import Scatter
 
-        plot = Scatter(title=title, legend=True)
+        plot = Scatter(title=title, legend=True, ax=ax)
 
         for index, (name, result) in zip(range(n_res), results.items()):
             plot.add(result.F, color=colors[index], edgecolor="black", label=name)
@@ -57,7 +57,7 @@ def print_results(results, title="default_title", scatter=False, radviz=True, mu
         for res_F in results.values():
             F_normalized.append(normalize(res_F.F, xl=F_normalizer.F.min(axis=0), xu=F_normalizer.F.max(axis=0)))
 
-        plot = Radviz(title=title, legend=True)
+        plot = Radviz(title=title, legend=True, ax=ax)
 
         for index, name, F_norm in zip(range(n_res), results.keys(), F_normalized):
             plot.add(F_norm, label=name, color=colors[index])
@@ -67,7 +67,7 @@ def print_results(results, title="default_title", scatter=False, radviz=True, mu
 
     plt.tight_layout()
 
-    if not multi_problems:
+    if not ax:
         plot.show()
 
 def test_all_problems(algorithms = {}, problem_names = [], n_objs = [], n_gens = [], scatter=False, radviz=True, save_file=False):
@@ -82,18 +82,32 @@ def test_all_problems(algorithms = {}, problem_names = [], n_objs = [], n_gens =
     if len(problem_names) == 1:
         axes = [axes]
 
-    all_results = []
+
+    total_problems = len(problem_names) * len(n_objs) * len(n_gens)
+    
+    # Calculate a reasonable grid layout
+    import math
+    cols = min(3, total_problems)  # Maximum 3 plots per row
+    rows = math.ceil(total_problems / cols)
+    
+    fig = plt.figure(figsize=(6 * cols, 5 * rows))
+
+    plot_idx = 1
     for problem_name in problem_names:
         for n_obj in n_objs:
             for n_gen in n_gens:
+                ax = fig.add_subplot(rows, cols, plot_idx)
+                plot_idx += 1
+
                 termination = get_termination("n_gen", n_gen)
                 
                 problem = get_problem(problem_name, n_obj=n_obj)
                 
                 results = get_results(problem, algorithms, termination)
 
-                print_results(results, title=f"{problem_name}, {n_obj}, {n_gen}", scatter=scatter, radviz=radviz, save_file=save_file)
+                print_results(results, title=f"{problem_name}, obj:{n_obj}, gens:{n_gen}", scatter=scatter, radviz=radviz, ax=ax, save_file=save_file)
 
+                print(f"{problem_name}, obj:{n_obj}, gens:{n_gen}")
     plt.show()
 
 
@@ -102,7 +116,7 @@ if __name__ == "__main__":
     from pymoo.algorithms.moo.nsga3 import NSGA3
     from pymoo.algorithms.moo.rvea import RVEA
     from pymoo.util.ref_dirs import get_reference_directions
-    from scripts.pymoo.mj_survival import MJ_Survival
+    from scripts.pymoo.MJ_Survival import MJ_Survival
 
     pop_size = 100
     
@@ -124,8 +138,8 @@ if __name__ == "__main__":
     # print_results(results, title=problem_name, scatter=False)
     
     problems = [f"dtlz{i}" for i in range(1, 8)]
-    n_objs = [3, 5, 9]
-    n_gens = [50, 200, 400]
+    n_objs = [3]# [3, 5, 9]
+    n_gens = [200] # [50, 200, 400]
 
     test_all_problems(algorithms, problems, n_objs, n_gens, radviz=True)
 
