@@ -2,16 +2,26 @@ import matplotlib
 matplotlib.use('Qt5Agg')  
 import matplotlib.pyplot as plt
 
+from pymoo.optimize import minimize
+
 from pymoo.termination import get_termination
 from pymoo.problems import get_problem
 
+import colorsys
+from pymoo.visualization.scatter import Scatter
+from pymoo.visualization.radviz import Radviz
+from pymoo.util.normalization import normalize
+import numpy as np
 
-# --- Test PyMoo ---
-from test.test import *
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.algorithms.moo.rvea import RVEA
+from pymoo.util.ref_dirs import get_reference_directions
 
+from scripts.mj_survival import MJ_Survival
+from test.test_phi_matrices import *
 
 def get_results(problem, algorithms, termination, seed=1):
-    from pymoo.optimize import minimize
     results = {}
 
     for name, algorithm in algorithms.items():
@@ -24,124 +34,85 @@ def get_results(problem, algorithms, termination, seed=1):
 
     return results
     
-def print_results(results, title="default_title", scatter=False, radviz=False, ax=None, save_file=False):
-    assert results, "Results Dict is Empty"
-    
-    assert (scatter or radviz), "It is necessary to choose a specific plot"
+def print_results(results, title="default_title", scatter=False, radviz=False, fig=None, ax=None, save_file=False):
+    assert results, "Results Dict is Empty"  
+    assert scatter or radviz, "It is necessary to choose a specific plot"
     
     n_res = len(results)
 
-    import colorsys
     colors = [colorsys.hsv_to_rgb(i / n_res, 1, 1) for i in range(n_res)]
 
     if scatter:
-        from pymoo.visualization.scatter import Scatter
+        plot = Scatter(title=title, legend=True)
 
-        plot = Scatter(title=title, legend=True, ax=ax)
-
-        for index, (name, result) in zip(range(n_res), results.items()):
+        for index, (name, result) in enumerate(results.items()):
             plot.add(result.F, color=colors[index], edgecolor="black", label=name)
 
         if save_file:
             plot.save("scatter")
-        
-        
 
     if radviz and n_res > 1:
-        from pymoo.visualization.radviz import Radviz
-        from pymoo.util.normalization import normalize
+        plot = Radviz(title=title, legend=True)
 
-        F_normalizer = list(results.values())[0]
+        all_F = np.concatenate([res.F for res in results.values()], axis=0)
+        xl = all_F.min(axis=0)
+        xu = all_F.max(axis=0)
+        F_normalized = [normalize(res.F, xl=xl, xu=xu) for res in results.values()]
         
-        F_normalized = []
-        for res_F in results.values():
-            F_normalized.append(normalize(res_F.F, xl=F_normalizer.F.min(axis=0), xu=F_normalizer.F.max(axis=0)))
-
-        plot = Radviz(title=title, legend=True, ax=ax)
-
-        for index, name, F_norm in zip(range(n_res), results.keys(), F_normalized):
+        for index, (name, F_norm) in enumerate(zip(results.keys(), F_normalized)):
             plot.add(F_norm, label=name, color=colors[index])
         
         if save_file:
             plot.save("radvis")
-
-    plt.tight_layout()
-
-    if not ax:
+    
+    if ax:
+        plot.ax = ax
+        plot.do()
+    else:
         plot.show()
 
-def test_all_problems(algorithms = {}, problem_names = [], n_objs = [], n_gens = [], scatter=False, radviz=True, save_file=False):
-    assert algorithms, "Missing algorithms"
-    assert problem_names, "Missing problem names"
-    assert n_objs, "Missing number of objective function"
-    assert n_gens, "Missing number of generations"
+def test_dltz(algorithms, n_gen = 200, n_obj=5, n = range(7)):
+    fig, axs = plt.subplots(2, 4, figsize=(14, 10))
+    fig.suptitle(f"DLTZ | n_gen={n_gen} | n_obj={n_obj}", fontsize=16)
     
-    fig, axes = plt.subplots(len(problem_names), len(n_objs), figsize=(5 * len(n_objs), 5 * len(problem_names)))
+    axs = axs.flatten()
 
-    # Se c'è solo un'asse, metti in lista
-    if len(problem_names) == 1:
-        axes = [axes]
+    for i in range(7):
+        if i + 1 not in n:
+            fig.delaxes(axs[i])
+            continue
 
+        problem_name = f"dtlz{i + 1}"
+        print(problem_name)
+        
+        problem = get_problem(problem_name, n_obj=n_obj)
+        termination = get_termination("n_gen", n_gen)
+        results = get_results(problem, algorithms, termination)
 
-    total_problems = len(problem_names) * len(n_objs) * len(n_gens)
-    
-    # Calculate a reasonable grid layout
-    import math
-    cols = min(3, total_problems)  # Maximum 3 plots per row
-    rows = math.ceil(total_problems / cols)
-    
-    fig = plt.figure(figsize=(6 * cols, 5 * rows))
+        print_results(results, title=problem_name, radviz=True, fig=fig, ax=axs[i])
 
-    plot_idx = 1
-    for problem_name in problem_names:
-        for n_obj in n_objs:
-            for n_gen in n_gens:
-                ax = fig.add_subplot(rows, cols, plot_idx)
-                plot_idx += 1
+    fig.delaxes(axs[7])
 
-                termination = get_termination("n_gen", n_gen)
-                
-                problem = get_problem(problem_name, n_obj=n_obj)
-                
-                results = get_results(problem, algorithms, termination)
-
-                print_results(results, title=f"{problem_name}, obj:{n_obj}, gens:{n_gen}", scatter=scatter, radviz=radviz, ax=ax, save_file=save_file)
-
-                print(f"{problem_name}, obj:{n_obj}, gens:{n_gen}")
     plt.show()
 
-
 if __name__ == "__main__":
-    from pymoo.algorithms.moo.nsga2 import NSGA2
-    from pymoo.algorithms.moo.nsga3 import NSGA3
-    from pymoo.algorithms.moo.rvea import RVEA
-    from pymoo.util.ref_dirs import get_reference_directions
-    from scripts.pymoo.MJ_Survival import MJ_Survival
-
     pop_size = 100
     
-    ref_dirs = get_reference_directions("das-dennis", n_dim=3, n_partitions=12)
+    # ref_dirs = get_reference_directions("das-dennis", n_dim=5, n_partitions=3)
 
     algorithms = {
         "pile_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=True)),
         "standard_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=False)),
         "NSGA2": NSGA2(pop_size=pop_size),
-        # "nsga3": NSGA3(pop_size=pop_size, ref_dirs=ref_dirs),
-        # "rvea": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
+        # "NSGA3": NSGA3(pop_size=pop_size, ref_dirs=ref_dirs),
+        # "RVEA": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
     }
 
-    #n_gen = 200
-    #problem_name = "dtlz1"
-    #problem = get_problem(problem_name, n_obj=5)
-    # termination = get_termination("n_gen", n_gen)
-    # results = get_results(problem, algorithms, termination)
-    # print_results(results, title=problem_name, scatter=False)
-    
-    problems = [f"dtlz{i}" for i in range(1, 8)]
-    n_objs = [3]# [3, 5, 9]
-    n_gens = [200] # [50, 200, 400]
+    n = [1, 3, 4]
+    n_gen = 100
+    n_obj = 5
 
-    test_all_problems(algorithms, problems, n_objs, n_gens, radviz=True)
+    test_dltz(algorithms, n_gen=n_gen, n_obj=n_obj, n=n)
 
 
     
