@@ -2,7 +2,7 @@ import numpy as np
  
 from collections import deque 
 
-def majority_judgment(phi_matrix, increasing=False):
+def majority_judgment(phi_matrix, increasing=True):
     phi_matrix = np.array(phi_matrix)
     
     leaderboard = [] 
@@ -30,10 +30,10 @@ def majority_judgment(phi_matrix, increasing=False):
         else:
             tmp_matrix = np.delete(tmp_matrix, middle_index, axis=1)
             if tmp_matrix.size == 0: # Two candidate have identical functions values
-                leaderboard.append(selected_candidates[0])
+                leaderboard.extend(selected_candidates)
                 continue
 
-        middle_index = tmp_matrix.shape[1] // 2 
+        middle_index = (tmp_matrix.shape[1] - 1) // 2 
         middle_column = tmp_matrix[:, middle_index]
         
         votes = {}
@@ -43,7 +43,7 @@ def majority_judgment(phi_matrix, increasing=False):
 
             votes[judje_vote].append(candidate)
 
-        votes = sorted(votes.items(), reverse=increasing)
+        votes = sorted(votes.items(), reverse=(not increasing))
 
         for vote in votes: # n = number of grades/votes (worst case)
             pile.append(vote[1]) # candidate list of a certain vote

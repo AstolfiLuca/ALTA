@@ -3,10 +3,10 @@ import numpy as np
 from pymoo.core.survival import Survival
 
 # --- Majority Judgment --- 
-from scripts.pile_MJ import majority_judgment as standard_MJ
+from scripts.mj.standard_mj import majority_judgment as standard_MJ
 
 # --- New Majority Judgment Algorithm--- 
-from scripts.pile_MJ import majority_judgment as pile_MJ
+from scripts.mj.pile_mj import majority_judgment as pile_MJ
 
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
@@ -28,9 +28,7 @@ class MJ_Survival(Survival):
         # print(leaderboard)
         # print(leaderboard[:n_survive]) # Solo indici dei sopravvissuti, dal migliore al peggiore
         
-        result = NonDominatedSorting().do(F, return_rank=True)
-                
-        fronts, rank = result
+        fronts, rank = NonDominatedSorting().do(F, return_rank=True)
         
         pop.set("rank", rank)
 
