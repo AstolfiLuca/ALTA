@@ -7,7 +7,6 @@ def realtimer(func):
     
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Usa una variabile condivisa tra i processi
         elapsed_value = multiprocessing.Value('d', 0.0)  # 'd' = double
         
         stop_event = multiprocessing.Event()
@@ -15,7 +14,7 @@ def realtimer(func):
         def update_timer():
             start_time = time.time()
             while not stop_event.is_set():
-                with elapsed_value.get_lock():  # Accesso sicuro
+                with elapsed_value.get_lock():
                     elapsed_value.value = time.time() - start_time
                 
                 sys.stdout.write('\033[s')

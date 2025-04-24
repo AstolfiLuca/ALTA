@@ -3,7 +3,6 @@ import colorsys
 from pymoo.visualization.scatter import Scatter
 from pymoo.visualization.radviz import Radviz
 from pymoo.util.normalization import normalize
-import tkinter as tk
 
 import matplotlib
 matplotlib.use("TkAgg")
