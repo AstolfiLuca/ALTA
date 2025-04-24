@@ -35,7 +35,9 @@ class MJ_Survival(Survival):
         crowding = np.full(len(pop), np.nan)
 
         pop.set("crowding", crowding)
-
+        #if gen == 400:
+        #    
+        #    print(len(pop[leaderboard[:n_survive]]))
         return pop[leaderboard[:n_survive]]
         
         """

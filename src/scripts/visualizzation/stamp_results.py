@@ -23,7 +23,12 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
 
     if radviz and n_res > 1:
         plot = Radviz(title=title, legend=True)
-
+        # togli la normalizzazione
+        # i candidati sono troppi pochi (6 nel caso base) devono essere gli stessi dell'n_survive (modifica GA)
+        # testa su 500/1000
+        # in futuro (non priorità), per dare più peso ad alcune funzioni invece che altre
+        for res in results.values():
+            print(len(res.F)) 
         all_F = np.concatenate([res.F for res in results.values()], axis=0)
         xl = all_F.min(axis=0)
         xu = all_F.max(axis=0)
