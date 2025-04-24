@@ -30,14 +30,14 @@ def main():
     n_obj = 5
     n_var = n_obj // 2 # nota perchè funzioni: n_obj = n_var / 2
 
-    ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=2) # le ref_dirs sono più della population se n_partition > 12 e pop_size = 100
+    ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=12) # le ref_dirs sono troppe se n_partition > 12 e pop_size = 100
 
     algorithms = {
         "STANDARD_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=False)),
         "PILE_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=True)),
-        "NSGA2": NSGA2(pop_size=pop_size),
+        #"NSGA2": NSGA2(pop_size=pop_size),
         #"NSGA3": NSGA3(pop_size=pop_size, ref_dirs=ref_dirs),
-        "RVEA": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
+        #"RVEA": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
     }  
 
     streaming(get_problem("dtlz1", n_obj=n_obj, n_var=n_var), algorithms, n_gen=n_gen)
