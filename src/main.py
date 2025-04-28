@@ -25,7 +25,7 @@ from test.wfg import *
 def main():
     pop_size = 100
     
-    n_gen = 400
+    n_gen = 100
     n_obj = 5
     n_var = 0#n_obj // 2 # nota perchè funzioni: n_obj = n_var / 2
 
