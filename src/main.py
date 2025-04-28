@@ -23,11 +23,30 @@ from test.phi_matrices import *
 from test.dtlz import *
 from test.wfg import *
 
-@realtimer
+
+"""
+Da fare:
+- Controllare la motivazione di sole 6 soluzioni
+- Sistemare streaming e video
+- Sistemare GD e GDPLUS
+- Rimuovere normalizzazione (se serve)
+- Modificare l'algoritmo, da NSGA a ???
+    - NSGA3
+    - GA ma trasformandolo in multi-obiettivo
+- Testare su 500 e 1000 generazioni (con quale metrica?)
+
+- Aggiungere l'importanza delle funzioni (quindi "duplicare" alcune colonne della tabella)
+
+"""
+
+# in futuro (non priorità), per dare più peso ad alcune funzioni invece che altre
+
+
+#@realtimer
 def main():
     pop_size = 100
     
-    n_gen = 100
+    n_gen = 1000
     n_obj = 5
     n_var = n_obj // 2 # nota perchè funzioni: n_obj = n_var / 2
 
@@ -36,7 +55,7 @@ def main():
     algorithms = {
         "STANDARD_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=False)),
         "PILE_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=True)),
-        # "NSGA2": NSGA2(pop_size=pop_size),
+        "NSGA2": NSGA2(pop_size=pop_size),
         # "NSGA3": NSGA3(pop_size=pop_size, ref_dirs=ref_dirs),
         # "RVEA": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
     }  
@@ -45,14 +64,14 @@ def main():
 
     results = get_results(get_problem("dtlz1", n_obj=n_obj, n_var=n_var), algorithms, n_gen, print_name=True) 
     performance(results, name="hv", normalized=True, print_performance=True)
-    # for res in results.values():
-    #     print(res.F)
     stamp_results(results, radviz=True)
     
-    # n = [1, 3, 4]
-    # test_dltz(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
+    #n = [1, 3, 4]
+    #test_wfg(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
 
 
+    # WIP
+    #streaming(get_problem("dtlz1", n_obj=n_obj), algorithms, n_gen=n_gen)
 
 if __name__ == "__main__":
     main()

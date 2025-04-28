@@ -1,31 +1,35 @@
-import matplotlib
-matplotlib.use('Qt5Agg')  
 import matplotlib.pyplot as plt
+import math
 
-from pymoo.termination import get_termination
 from pymoo.problems import get_problem
 
 from test.phi_matrices import *
 from scripts.results.stamp_results import stamp_results
 from scripts.results.get_results import get_results
 
-def test_dltz(algorithms, n_gen = 200, n_obj=5, n = range(7), tight_layout=False):
-    fig, axs = plt.subplots(2, 4, figsize=(14, 10))
-    axs = axs.flatten()
-    fig.suptitle(f"DLTZ | n_gen={n_gen} | n_obj={n_obj}", fontsize=16)
-    fig.delaxes(axs[7])
-    
-    for i in range(7):
-        if i + 1 not in n:
-            fig.delaxes(axs[i])
-            continue
+def test_dltz(algorithms, n_gen=200, n_obj=5, n=range(7), tight_layout=False):
+    n_problems = len(n)
+    columns = math.ceil(math.sqrt(n_problems))
+    rows = math.ceil(n_problems / columns)
 
-        problem_name = f"dtlz{i + 1}"
+    fig, axs = plt.subplots(rows, columns, figsize=(14, 10))
+    if n_problems > 1:  
+        axs = axs.flatten()
+    else:
+        axs = [axs]  # Handle the single subplot case
+        
+    fig.suptitle(f"DLTZ | n_gen={n_gen} | n_obj={n_obj}", fontsize=16)
+    
+    for i, problem_num in enumerate(n):
+        problem_name = f"dtlz{problem_num}"
 
         results = get_results(get_problem(problem_name, n_obj=n_obj), algorithms, n_gen)
-
+        
         stamp_results(results, title=problem_name, radviz=True, ax=axs[i])
-
+    
+    for i in range(n_problems, len(axs)):
+        axs[i].set_visible(False)
+    
     if tight_layout:
         plt.tight_layout()
 

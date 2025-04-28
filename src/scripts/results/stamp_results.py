@@ -20,31 +20,20 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
 
         for index, (name, result) in enumerate(results.items()):
             plot.add(result.F, color=colors[index], edgecolor="black", label=name)
-            plot.do()
 
         if save_file:
             plot.save("scatter")
 
-        plot.do()
-
     if radviz and n_res > 1:
         plot = Radviz(title=title, legend=True)
-        # togli la normalizzazione
-        # i candidati sono troppi pochi (6 nel caso base) devono essere gli stessi dell'n_survive (modifica GA)
-        # testa su 500/1000
-        # in futuro (non priorità), per dare più peso ad alcune funzioni invece che altre
-        # for res in results.values():
-        #     print(len(res.F)) 
         
         all_F = np.concatenate([res.F for res in results.values()], axis=0)
-        print(len(all_F))
         xl = all_F.min(axis=0)
         xu = all_F.max(axis=0)
         F_normalized = [normalize(res.F, xl=xl, xu=xu) for res in results.values()]
         
         for index, (name, F_norm) in enumerate(zip(results.keys(), F_normalized)):
             plot.add(F_norm, label=name, color=colors[index])
-            plot.do()
         
         if save_file:
             plot.save("radvis")
@@ -53,7 +42,8 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
     
     if ax:
         plot.ax = ax
-
+        plot.do()
+        no_plot = True
 
     if not no_plot:
         plot.show()
