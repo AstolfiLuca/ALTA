@@ -5,7 +5,7 @@ from pymoo.visualization.radviz import Radviz
 from pymoo.util.normalization import normalize
 
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("QtAgg")
 
 def stamp_results(results, title="default_title", scatter=False, radviz=False, ax=None, save_file=False, no_plot=False):
     assert results, "Results Dict is Empty"  
@@ -33,9 +33,11 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
         # i candidati sono troppi pochi (6 nel caso base) devono essere gli stessi dell'n_survive (modifica GA)
         # testa su 500/1000
         # in futuro (non priorità), per dare più peso ad alcune funzioni invece che altre
-        for res in results.values():
-            print(len(res.F)) 
+        # for res in results.values():
+        #     print(len(res.F)) 
+        
         all_F = np.concatenate([res.F for res in results.values()], axis=0)
+        print(len(all_F))
         xl = all_F.min(axis=0)
         xu = all_F.max(axis=0)
         F_normalized = [normalize(res.F, xl=xl, xu=xu) for res in results.values()]

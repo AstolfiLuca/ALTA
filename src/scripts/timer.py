@@ -31,12 +31,11 @@ def realtimer(func):
         timer_process.start()
         
         try:
-            result = func(*args, **kwargs)
+            func(*args, **kwargs)
         finally:
             stop_event.set()
             timer_process.join()
             print(f"\nTempo totale di esecuzione: {elapsed_value.value:.2f} secondi")
         
-        return result
     
     return wrapper
