@@ -26,52 +26,46 @@ from test.wfg import *
 
 """
 Da fare:
-- Controllare la motivazione di sole 6 soluzioni
+-* Controllare la motivazione di sole 6 soluzioni
 - Sistemare streaming e video
 - Sistemare GD e GDPLUS
 - Rimuovere normalizzazione (se serve)
-- Modificare l'algoritmo, da NSGA a ???
-    - NSGA3
+-* Modificare l'algoritmo, da NSGA a ???
+    - *NSGA3
     - GA ma trasformandolo in multi-obiettivo
-- Testare su 500 e 1000 generazioni (con quale metrica?)
+-* Testare su 500 e 1000 generazioni (con quale metrica?)
 
 - Aggiungere l'importanza delle funzioni (quindi "duplicare" alcune colonne della tabella)
-
 """
-
-# in futuro (non priorità), per dare più peso ad alcune funzioni invece che altre
 
 
 #@realtimer
 def main():
     pop_size = 100
     
-    n_gen = 1000
+    n_gen = 200
     n_obj = 5
     n_var = n_obj // 2 # nota perchè funzioni: n_obj = n_var / 2
 
-    ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=12) # le ref_dirs sono troppe se n_partition > 12 e pop_size = 100
+    ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=4) # le ref_dirs sono troppe se n_partition > 12 e pop_size = 100
 
     algorithms = {
-        "STANDARD_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=False)),
-        "PILE_MJ": NSGA2(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=True)),
+        "STANDARD_MJ": NSGA3(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=False), ref_dirs=ref_dirs),
+        "PILE_MJ": NSGA3(pop_size=pop_size, survival=MJ_Survival(use_MJ_pile=True), ref_dirs=ref_dirs),
         "NSGA2": NSGA2(pop_size=pop_size),
         # "NSGA3": NSGA3(pop_size=pop_size, ref_dirs=ref_dirs),
         # "RVEA": RVEA(pop_size=pop_size, ref_dirs=ref_dirs)
     }  
 
-    #streaming(get_problem("dtlz1", n_obj=n_obj, n_var=n_var), algorithms, n_gen=n_gen)
-
-    results = get_results(get_problem("dtlz1", n_obj=n_obj, n_var=n_var), algorithms, n_gen, print_name=True) 
-    performance(results, name="hv", normalized=True, print_performance=True)
-    stamp_results(results, radviz=True)
+    #results = get_results(get_problem("dtlz2", n_obj=n_obj, n_var=n_var), algorithms, n_gen, print_name=True) 
+    #performance(results, name="gd", normalized=True, print_performance=True)
+    #stamp_results(results, radviz=True)
     
-    #n = [1, 3, 4]
-    #test_wfg(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
+    n = [1, 3, 4]
+    test_wfg(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
 
+    #streaming(get_problem("dtlz1", n_obj=n_obj), algorithms, n_gen=n_gen) # WIP
 
-    # WIP
-    #streaming(get_problem("dtlz1", n_obj=n_obj), algorithms, n_gen=n_gen)
 
 if __name__ == "__main__":
     main()
