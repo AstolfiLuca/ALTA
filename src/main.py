@@ -33,10 +33,9 @@ Da fare:
 -* Modificare l'algoritmo, da NSGA a:
     - *NSGA3
     - *GA ma trasformandolo in multi-obiettivo
-
+-* Modifica gd e gdplus con la pareto front del problema
 - Aggiungere l'importanza delle funzioni (quindi "duplicare" alcune colonne della tabella)
 
-- Modifica gd e gdplus con la pareto front del problema
 
 
 -* Implementare, tramite "GeneticAlgorithm" un nuovo algoritmo usando le cose base:
@@ -53,13 +52,14 @@ Da fare:
 
 #@realtimer
 def main():
-    n_gen = 200
+    n_gen = 50
     n_obj = 5 
     #n_var = n_obj // 2 # Con troppi vincoli 
 
     ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
-
-    problem = get_problem("dtlz1", n_obj=n_obj) # in base al problema cambia il numero di risultati
+    pop_size = len(ref_dirs)
+    
+    problem = get_problem("dtlz3", n_obj=n_obj) # in base al problema cambia il numero di risultati
 
     pareto_front_problem = problem.pareto_front(ref_dirs=ref_dirs)
 
@@ -69,7 +69,7 @@ def main():
         #"PILE_MJ_NSGA3": NSGA3(survival=MJSurvival(use_MJ_pile=True), ref_dirs=ref_dirs),
 
         #"STANDARD_MJ_ALGORITHM": MJAlgorithm(use_MJ_pile=False, eliminate_duplicates=False),
-        "PILE_MJ_ALGORITHM": MJAlgorithm(pop_size=330, use_MJ_pile=True, eliminate_duplicates=False),
+        "PILE_MJ_ALGORITHM": MJAlgorithm(pop_size=pop_size, use_MJ_pile=True, eliminate_duplicates=False),
 
         #"NSGA2": NSGA2(),
         #"NSGA3": NSGA3(ref_dirs=ref_dirs),
@@ -77,14 +77,14 @@ def main():
     }
 
 
-    #results = get_results(problem, algorithms, n_gen, print_name=True) 
-    #performance(results, name="gd", pareto_front_problem=pareto_front_problem, normalized=True, print_performance=True)
+    # results = get_results(problem, algorithms, n_gen, print_name=True) 
+    # performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=True, print_performance=True)
     #stamp_results(results, radviz=True)
     
+    #n = [1, 2, 3, 4, 5, 6, 7]
+    #test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
 
-    test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, n=list(range(1,8)), tight_layout=True)
-
-    #streaming(get_problem("dtlz1", n_obj=n_obj), algorithms, n_gen=n_gen) # WIP
+    streaming(problem, algorithms, n_gen=n_gen) # WIP
 
 
 if __name__ == "__main__":

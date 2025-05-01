@@ -19,9 +19,8 @@ def get_results(problem, algorithms, n_gen, save_history=False, print_name=False
             seed=seed
         )
 
-        print(f"Pop size finale: {len(result.pop)}")
-        print(f"Soluzioni non dominate in F: {len(result.F)}")
-
+        # print(f"Pop size finale: {len(result.pop)}")
+        # print(f"Soluzioni non dominate in F: {len(result.F)}")
         
         results[name] = result
 

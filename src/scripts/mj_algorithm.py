@@ -13,9 +13,10 @@ from scripts.mj.standard_mj import majority_judgment as standard_MJ
 from scripts.mj.pile_mj import majority_judgment as pile_MJ
 
 class MJSurvival(Survival):
-    def __init__(self, filter_infeasible=False, use_MJ_pile=True):
+    def __init__(self, filter_infeasible=False, use_MJ_pile=True, use_MJ_algoritm=True):
         super().__init__(filter_infeasible)
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
+        self.use_MJ_algorithm = use_MJ_algoritm
         self.opt = None
 
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
@@ -30,16 +31,13 @@ class MJSurvival(Survival):
         
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 
+        if self.use_MJ_algorithm:
+            fronts, rank = NonDominatedSorting().do(F, return_rank=True)
+            pop.set("rank", rank)
+            self.opt = pop[fronts[0]] # Per NSGA3
 
-        # if gen == 200:
-        #     print(len(leaderboard[:n_survive]))
-
-        fronts, rank = NonDominatedSorting().do(F, return_rank=True)
-        pop.set("rank", rank)
-        self.opt = pop[fronts[0]] # Per NSGA3
-        
-        crowding = np.full(len(pop), np.nan)
-        pop.set("crowding", crowding)
+            crowding = np.full(len(pop), np.nan)
+            pop.set("crowding", crowding)
 # 
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
 
@@ -67,4 +65,4 @@ class MJAlgorithm(GeneticAlgorithm):
                          output=output, 
                          **kwargs)
 
-        self.survival = MJSurvival(use_MJ_pile=use_MJ_pile)
+        self.survival = MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True)
