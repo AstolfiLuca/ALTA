@@ -9,7 +9,8 @@ def get_results(problem, algorithms, n_gen, save_history=False, print_name=False
     for name, algorithm in algorithms.items():
         if print_name:
             print(name)
-            
+        
+        # Già qui mi restituisce 30 soluzioni
         result = minimize(
             problem, 
             algorithm, 
@@ -17,6 +18,10 @@ def get_results(problem, algorithms, n_gen, save_history=False, print_name=False
             save_history=save_history,
             seed=seed
         )
+
+        print(f"Pop size finale: {len(result.pop)}")
+        print(f"Soluzioni non dominate in F: {len(result.F)}")
+
         
         results[name] = result
 

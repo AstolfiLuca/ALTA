@@ -7,7 +7,7 @@ from test.phi_matrices import *
 from scripts.results.stamp_results import stamp_results
 from scripts.results.get_results import get_results
 
-def test_dltz(algorithms, n_gen=200, n_obj=5, n=range(7), tight_layout=False):
+def test_dtlz(algorithms, n_gen=200, n_obj=5, n=range(7), print_name=True, tight_layout=False):
     n_problems = len(n)
     columns = math.ceil(math.sqrt(n_problems))
     rows = math.ceil(n_problems / columns)
@@ -23,7 +23,7 @@ def test_dltz(algorithms, n_gen=200, n_obj=5, n=range(7), tight_layout=False):
     for i, problem_num in enumerate(n):
         problem_name = f"dtlz{problem_num}"
 
-        results = get_results(get_problem(problem_name, n_obj=n_obj), algorithms, n_gen)
+        results = get_results(get_problem(problem_name, n_obj=n_obj), algorithms, n_gen, print_name=print_name)
         
         stamp_results(results, title=problem_name, radviz=True, ax=axs[i])
     
