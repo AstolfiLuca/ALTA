@@ -23,6 +23,9 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
         if save_file:
             plot.save("scatter")
 
+
+        plot.do() 
+
     if radviz and n_res > 1:
         plot = Radviz(title=title, legend=True)
         
@@ -33,10 +36,10 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
         if save_file:
             plot.save("radvis")
         
-        
+        plot.do() 
+       
     if ax:
         plot.ax = ax
-        plot.do()
         no_plot = True
 
     if not no_plot:

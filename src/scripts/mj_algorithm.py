@@ -25,7 +25,7 @@ class MJSurvival(Survival):
         
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
-        F_candidate_sorted = np.argsort(F, axis=0) # Ordino gli indi 
+        F_candidate_sorted = np.argsort(F, axis=0) # Ordino gli indici 
         
         leaderboard = self.MJ(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         

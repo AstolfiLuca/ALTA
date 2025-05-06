@@ -50,19 +50,39 @@ Da fare:
 """
 
 
+"""
+1: otteniamo il nadir (attuale, mix del valore migliore tra quelli che abbiamo) e ideal (idem)
+2: utilizza vari bucket 5
+3: uso il bucket per fare rank
+E QUESTO PERCHè EVITO DI FARE 
+
+
+Per evitare di avere troppe soluzioni nella stessa regione è utilizzare:
+- rank di MJ 
+- crowding distance di NSGA2 (in caso di pareggio tra le ultime)
+
+utilizza vettore/norma
+- memorizzo lo storico dei valori (per debug<)
+
+
+prove con 6/7 obj
+"""
+
+
+
 #@realtimer
 def main():
-    n_gen = 50
-    n_obj = 5 
-    #n_var = n_obj // 2 # Con troppi vincoli 
+    n_gen = 400
+    n_obj = 6
+    n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
 
     ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
-    pop_size = len(ref_dirs)
+    pop_size=100
+    #pop_size = len(ref_dirs)
     
-    problem = get_problem("dtlz3", n_obj=n_obj) # in base al problema cambia il numero di risultati
+    problem = get_problem("dtlz2", n_obj=n_obj , n_var=n_var) # in base al problema cambia il numero di risultati
 
-    pareto_front_problem = problem.pareto_front(ref_dirs=ref_dirs)
-
+    #pareto_front_problem = problem.pareto_front(ref_dirs=ref_dirs)
 
     algorithms = {
         "STANDARD_MJ_NSGA3": NSGA3(survival=MJSurvival(use_MJ_pile=False), ref_dirs=ref_dirs),
@@ -73,18 +93,18 @@ def main():
 
         #"NSGA2": NSGA2(),
         #"NSGA3": NSGA3(ref_dirs=ref_dirs),
-        #"RVEA": RVEA(ref_dirs=ref_dirs)
+        "RVEA": RVEA(ref_dirs=ref_dirs)
     }
 
 
-    # results = get_results(problem, algorithms, n_gen, print_name=True) 
-    # performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=True, print_performance=True)
-    #stamp_results(results, radviz=True)
+    results = get_results(problem, algorithms, n_gen, print_name=True) 
+    #performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=False, print_performance=True)
+    stamp_results(results, radviz=True)
     
-    #n = [1, 2, 3, 4, 5, 6, 7]
-    #test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, n=n, tight_layout=True)
+    # n = [2, 6]
+    # test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, var=True, n=n, tight_layout=True)
 
-    streaming(problem, algorithms, n_gen=n_gen) # WIP
+    #streaming(problem, algorithms, n_gen=n_gen) # WIP
 
 
 if __name__ == "__main__":
