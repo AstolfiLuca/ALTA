@@ -26,31 +26,6 @@ from test.wfg import test_wfg
 
 
 """
-Da fare:
--? Controllare la motivazione di sole 6 soluzioni
-- Sistemare streaming e video
--*? Sistemare GD e GDPLUS --> preferisci il plus
--* Modificare l'algoritmo, da NSGA a:
-    - *NSGA3
-    - *GA ma trasformandolo in multi-obiettivo
--* Modifica gd e gdplus con la pareto front del problema
-- Aggiungere l'importanza delle funzioni (quindi "duplicare" alcune colonne della tabella)
-
-
-
--* Implementare, tramite "GeneticAlgorithm" un nuovo algoritmo usando le cose base:
-    - pop_size=None,
-    - sampling=FloatRandomSampling(),
-    - selection=RandomSelection(),
-    - crossover=SBX(eta=30, prob=1.0),
-    - mutation=PM(eta=20),
-    - eliminate_duplicates=True, --> Prova mettendolo a false (nel caso di pari risultati)
-    - n_offsprings=None,
-    - output=MultiObjectiveOutput(),
-"""
-
-
-"""
 1: otteniamo il nadir (attuale, mix del valore migliore tra quelli che abbiamo) e ideal (idem)
 2: utilizza vari bucket 5
 3: uso il bucket per fare rank
@@ -66,26 +41,33 @@ utilizza vettore/norma
 
 
 prove con 6/7 obj
+
+------------------------------
+
+
+
+
 """
 
 
 
 #@realtimer
 def main():
-    n_gen = 400
-    n_obj = 6
-    n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
+    n_gen = 400 # Mantieni 400-600 
+    n_obj = 6 # Mantieni 6-7
+    #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
+    seed = 1
 
     ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
     pop_size=100
     #pop_size = len(ref_dirs)
     
-    problem = get_problem("dtlz2", n_obj=n_obj , n_var=n_var) # in base al problema cambia il numero di risultati
+    problem = get_problem("dtlz1", n_obj=n_obj) # , n_var=n_var) # in base al problema cambia il numero di risultati
 
     #pareto_front_problem = problem.pareto_front(ref_dirs=ref_dirs)
 
     algorithms = {
-        "STANDARD_MJ_NSGA3": NSGA3(survival=MJSurvival(use_MJ_pile=False), ref_dirs=ref_dirs),
+        #"STANDARD_MJ_NSGA3": NSGA3(survival=MJSurvival(use_MJ_pile=False), ref_dirs=ref_dirs),
         #"PILE_MJ_NSGA3": NSGA3(survival=MJSurvival(use_MJ_pile=True), ref_dirs=ref_dirs),
 
         #"STANDARD_MJ_ALGORITHM": MJAlgorithm(use_MJ_pile=False, eliminate_duplicates=False),
@@ -97,7 +79,7 @@ def main():
     }
 
 
-    results = get_results(problem, algorithms, n_gen, print_name=True) 
+    results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed) 
     #performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=False, print_performance=True)
     stamp_results(results, radviz=True)
     

@@ -21,7 +21,7 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
             plot.add(res.F, color=colors[index], edgecolor="black", label=name)
 
         if save_file:
-            plot.save("scatter")
+            plot.save(f"scatter_{title}")
 
 
         plot.do() 
@@ -34,7 +34,7 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
             plot.add(res.F, label=name, color=colors[index])
         
         if save_file:
-            plot.save("radvis")
+            plot.save(f"radviz_{title}")
         
         plot.do() 
        
