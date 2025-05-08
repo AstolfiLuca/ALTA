@@ -73,6 +73,9 @@ def main():
         #"STANDARD_MJ_ALGORITHM": MJAlgorithm(use_MJ_pile=False, eliminate_duplicates=False),
         "PILE_MJ_ALGORITHM": MJAlgorithm(pop_size=pop_size, use_MJ_pile=True, eliminate_duplicates=False),
 
+        #"STANDARD_MJ_ALGORITHM_BUCKETS": NEW_MJAlgorithm(use_MJ_pile=False, eliminate_duplicates=False),
+        "PILE_MJ_ALGORITHM_BUCKETS": MJAlgorithm(pop_size=pop_size, use_MJ_pile=True, eliminate_duplicates=False, buckets=6),
+
         #"NSGA2": NSGA2(),
         #"NSGA3": NSGA3(ref_dirs=ref_dirs),
         "RVEA": RVEA(ref_dirs=ref_dirs)

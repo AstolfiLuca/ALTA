@@ -42,24 +42,69 @@ class MJSurvival(Survival):
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
     
 
-class NEW_MJSurvival(Survival):
-    def __init__(self, filter_infeasible=False, use_MJ_pile=True, use_MJ_algoritm=True):
+class BUCKET_MJSurvival(Survival):
+    def __init__(self, filter_infeasible=False, buckets=6, use_MJ_pile=True, use_MJ_algoritm=True):
         super().__init__(filter_infeasible)
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
         self.use_MJ_algorithm = use_MJ_algoritm
         self.opt = None
+        self.buckets = buckets
+
+
+
+    def _calc_ideal_point(self, F): # Punto con valori minimi per ogni obiettivo
+        if F is None or len(F) == 0:
+            return np.array([])
+
+        num_objectives = F.shape[1]
+        ideal = np.zeros(num_objectives)
+
+        for i in range(num_objectives):
+            best_idx = np.argmin(F[:, i])
+            ideal[i] = F[best_idx, i]
+        
+        return ideal
+
+    def _calc_nadir_point(self, F): # Punto con valori massimi per ogni obiettivo
+        if F is None or len(F) == 0:
+            return np.array([])
+
+        num_objectives = F.shape[1]
+        nadir = np.zeros(num_objectives)
+
+        for i in range(num_objectives):
+            worst_idx = np.argmax(F[:, i])
+            nadir[i] = F[worst_idx, i]
+        
+        return nadir
+
+    def _assign_solutions_to_buckets(self, F, ideal, nadir): # Ritorna una matrice (pop_size, n_obj) con i bucket assegnati ad ogni soluzione (divisione da nadir a ideal)
+        F = np.asarray(F)
+        ideal = np.asarray(ideal)
+        nadir = np.asarray(nadir)
+
+        pop_size, n_obj = F.shape
+        bucket_matrix = np.zeros(F.shape)
+
+        for j in range(n_obj):
+            buckets_intervals = np.linspace(nadir[j], ideal[j], self.buckets + 1) # Si divide lo spazio (da nadir a ideal) nel numero di buckets (per farlo si aggiunge 1 per l'ultimo estremo)
+
+            bucket_indices = np.digitize(F[:, j], bins=buckets_intervals) - 1 # Usiamo digitize per assegnare le soluzioni ad ogni bucket (-1 perché digitize restituisce bin da 1 a N)
+            
+            bucket_indices = np.clip(bucket_indices, 0, self.buckets - 1) # Clip per sicurezza (in caso di valori esattamente uguali a ideal) (da 0 a n_buckets - 1)
+
+            bucket_matrix[:, j] = bucket_indices
+
+        return bucket_matrix
 
     def _calc_crowding_distance(self, F, **kwargs):
         n_points, n_obj = F.shape
-
-        # sort each column and get index
-        I = np.argsort(F, axis=0)
-
-        # sort the objective space values for the whole matrix
-        F = F[I, np.arange(n_obj)]
-
-        # calculate the distance from each point to the last and next
-        dist = np.row_stack([F, np.full(n_obj, np.inf)]) - np.row_stack([np.full(n_obj, -np.inf), F])
+        
+        I = np.argsort(F, axis=0) # sort each column and get index
+        
+        F = F[I, np.arange(n_obj)] # sort the objective space values for the whole matrix
+        
+        dist = np.row_stack([F, np.full(n_obj, np.inf)]) - np.row_stack([np.full(n_obj, -np.inf), F]) # calculate the distance from each point to the last and next
 
         # calculate the norm for each objective - set to NaN if all values are equal
         norm = np.max(F, axis=0) - np.min(F, axis=0)
@@ -79,31 +124,25 @@ class NEW_MJSurvival(Survival):
 
         return cd
 
-    def _calc_ideal_point(population):
-        if not population:
-            return []
-        
-        num_objectives = len(population[0])
-        ideal = [float('inf')] * num_objectives
-        
-        for solution in population:
-            for i in range(num_objectives):
-                ideal[i] = min(ideal[i], solution[i])
-        
-        return ideal
+    def _sort_within_buckets(self, F, bucket_matrix):
+        sorted_indices = []
 
-    def _calc_nadir_point(population):
-        if not population:
-            return []
-        
-        num_objectives = len(population[0])
-        nadir = [float('-inf')] * num_objectives
-        
-        for solution in population:
-            for i in range(num_objectives):
-                nadir[i] = max(nadir[i], solution[i])
-        
-        return nadir
+        unique_buckets, inverse_indices = np.unique(bucket_matrix, axis=0, return_inverse=True)
+
+        for i in range(len(unique_buckets)):
+            group_indices = np.where(inverse_indices == i)[0]
+
+            if len(group_indices) <= 2:
+                sorted_indices.extend(group_indices.tolist())
+            else:
+                cd = self._calc_crowding_distance(F[group_indices])
+                order = np.argsort(-cd)
+                sorted_indices.extend(group_indices[order].tolist())
+
+        # Ordina F secondo gli indici ottenuti
+        return F[sorted_indices]
+
+
 
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
@@ -111,11 +150,14 @@ class NEW_MJSurvival(Survival):
         
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
-        F_candidate_sorted = np.argsort(F, axis=0) # Ordino gli indici 
-        
-        leaderboard = self.MJ(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
-        
+        ideal = self._calc_ideal_point(F)
+        nadir = self._calc_nadir_point(F)
 
+        bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir) # Righe: popolazione, colonne: vettore
+
+        candidate_sorted_bybucket = np.argsort(bucket_matrix, axis=0) # Ordino gli indici 
+        
+        leaderboard = self.MJ(candidate_sorted_bybucket) # pile_MJ if use_MJ_pile else standard_MJ  
         
 
         # print(leaderboard)
@@ -142,6 +184,7 @@ class MJAlgorithm(GeneticAlgorithm):
                  n_offsprings=None,
                  output=MultiObjectiveOutput(),
                  use_MJ_pile=True,
+                 buckets=None,
                  **kwargs
                  ):
 
@@ -155,4 +198,7 @@ class MJAlgorithm(GeneticAlgorithm):
                          output=output, 
                          **kwargs)
 
-        self.survival = MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True)
+        if buckets:
+            self.survival = BUCKET_MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True, buckets=buckets)
+        else:
+            self.survival = MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True)
