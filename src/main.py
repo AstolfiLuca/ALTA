@@ -44,8 +44,8 @@ prove con 6/7 obj
 
 ------------------------------
 
-
-
+Implementazione di un algoritmo (majority judjment) che serve per selezionare le soluzioni da mantenere alla 
+generazione successiva in un algoritmo di genetic programming ma nel caso multiobiettivo
 
 """
 
@@ -58,11 +58,11 @@ def main():
     #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
     seed = 1
 
-    ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
-    pop_size=100
+    #ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
+    pop_size = 100
     #pop_size = len(ref_dirs)
     
-    problem = get_problem("dtlz1", n_obj=n_obj) # , n_var=n_var) # in base al problema cambia il numero di risultati
+    problem = get_problem("dtlz1", n_obj=n_obj)#, n_var=n_var) # in base al problema cambia il numero di risultati
 
     #pareto_front_problem = problem.pareto_front(ref_dirs=ref_dirs)
 
@@ -78,7 +78,7 @@ def main():
 
         #"NSGA2": NSGA2(),
         #"NSGA3": NSGA3(ref_dirs=ref_dirs),
-        "RVEA": RVEA(ref_dirs=ref_dirs)
+        #"RVEA": RVEA(ref_dirs=ref_dirs)
     }
 
 

@@ -15,9 +15,10 @@ from scripts.mj.pile_mj import majority_judgment as pile_MJ
 class MJSurvival(Survival):
     def __init__(self, filter_infeasible=False, use_MJ_pile=True, use_MJ_algoritm=True):
         super().__init__(filter_infeasible)
+        self.opt = None
+
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
         self.use_MJ_algorithm = use_MJ_algoritm
-        self.opt = None
 
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
@@ -45,48 +46,34 @@ class MJSurvival(Survival):
 class BUCKET_MJSurvival(Survival):
     def __init__(self, filter_infeasible=False, buckets=6, use_MJ_pile=True, use_MJ_algoritm=True):
         super().__init__(filter_infeasible)
+        self.opt = None
+        
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
         self.use_MJ_algorithm = use_MJ_algoritm
-        self.opt = None
         self.buckets = buckets
 
-
-
-    def _calc_ideal_point(self, F): # Punto con valori minimi per ogni obiettivo
+    def _calc_ideal_nadir_points(self, F): # Punto con valori minimi per ogni obiettivo
         if F is None or len(F) == 0:
             return np.array([])
 
-        num_objectives = F.shape[1]
-        ideal = np.zeros(num_objectives)
+        n_obj = F.shape[1]
 
-        for i in range(num_objectives):
+        ideal = np.zeros(n_obj)
+        nadir = np.zeros(n_obj)
+
+        for i in range(n_obj):
             best_idx = np.argmin(F[:, i])
             ideal[i] = F[best_idx, i]
-        
-        return ideal
 
-    def _calc_nadir_point(self, F): # Punto con valori massimi per ogni obiettivo
-        if F is None or len(F) == 0:
-            return np.array([])
-
-        num_objectives = F.shape[1]
-        nadir = np.zeros(num_objectives)
-
-        for i in range(num_objectives):
             worst_idx = np.argmax(F[:, i])
             nadir[i] = F[worst_idx, i]
         
-        return nadir
+        return ideal, nadir
 
     def _assign_solutions_to_buckets(self, F, ideal, nadir): # Ritorna una matrice (pop_size, n_obj) con i bucket assegnati ad ogni soluzione (divisione da nadir a ideal)
-        F = np.asarray(F)
-        ideal = np.asarray(ideal)
-        nadir = np.asarray(nadir)
-
-        pop_size, n_obj = F.shape
         bucket_matrix = np.zeros(F.shape)
 
-        for j in range(n_obj):
+        for j in range(F.shape[1]):
             buckets_intervals = np.linspace(nadir[j], ideal[j], self.buckets + 1) # Si divide lo spazio (da nadir a ideal) nel numero di buckets (per farlo si aggiunge 1 per l'ultimo estremo)
 
             bucket_indices = np.digitize(F[:, j], bins=buckets_intervals) - 1 # Usiamo digitize per assegnare le soluzioni ad ogni bucket (-1 perché digitize restituisce bin da 1 a N)
@@ -97,8 +84,8 @@ class BUCKET_MJSurvival(Survival):
 
         return bucket_matrix
 
-    def _calc_crowding_distance(self, F, **kwargs):
-        n_points, n_obj = F.shape
+    def _calc_crowding_distance(self, F):
+        n_obj = F.shape[1]
         
         I = np.argsort(F, axis=0) # sort each column and get index
         
@@ -139,8 +126,7 @@ class BUCKET_MJSurvival(Survival):
                 order = np.argsort(-cd)
                 sorted_indices.extend(group_indices[order].tolist())
 
-        # Ordina F secondo gli indici ottenuti
-        return F[sorted_indices]
+        return F[sorted_indices] # Ordina F secondo gli indici ottenuti
 
 
 
@@ -150,19 +136,29 @@ class BUCKET_MJSurvival(Survival):
         
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
-        ideal = self._calc_ideal_point(F)
-        nadir = self._calc_nadir_point(F)
+        ideal, nadir = self._calc_ideal_nadir_points(F)
 
-        bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir) # Righe: popolazione, colonne: vettore
+        bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir) # bucket_matrix --> Righe: popolazione, colonne: vettore
 
-        candidate_sorted_bybucket = np.argsort(bucket_matrix, axis=0) # Ordino gli indici 
+        crowded_sorted = self._sort_within_buckets(F, bucket_matrix)
         
-        leaderboard = self.MJ(candidate_sorted_bybucket) # pile_MJ if use_MJ_pile else standard_MJ  
+        candidate_sorted = np.argsort(crowded_sorted, axis=0)
+
+        leaderboard = self.MJ(candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
+        if gen == 2:
+            import sys
+            np.set_printoptions(threshold=sys.maxsize)
+            print(f"Gen {gen} ideal: {ideal}")
+            print(f"Gen {gen} nadir: {nadir}")
+            print(f"Gen {gen} F: {F[1]}")
+            print(f"Gen {gen} bucket matrix: {bucket_matrix}")
+            print(f"Gen {gen} candidate sorted: {candidate_sorted}")
+            print(f"Gen {gen} leaderboard: {leaderboard}")
 
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 
-        if self.use_MJ_algorithm:
+        if not self.use_MJ_algorithm:
             fronts, rank = NonDominatedSorting().do(F, return_rank=True)
             pop.set("rank", rank)
             self.opt = pop[fronts[0]] # Per NSGA3

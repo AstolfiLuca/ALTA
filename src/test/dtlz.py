@@ -16,8 +16,6 @@ def test_dtlz(algorithms, n_gen=200, n_obj=5, n=range(7), var=False, print_name=
     if var:
         n_var = n_obj + 9
     
-        
-
     fig, axs = plt.subplots(rows, columns, figsize=(14, 10))
     if n_problems > 1:  
         axs = axs.flatten()
