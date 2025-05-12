@@ -9,6 +9,8 @@ from pymoo.util.display.multi import MultiObjectiveOutput
 from pymoo.core.survival import Survival
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
+from pymoo.operators.survival.rank_and_crowding.metrics import calc_crowding_distance
+
 from scripts.mj.standard_mj import majority_judgment as standard_MJ
 from scripts.mj.pile_mj import majority_judgment as pile_MJ
 
@@ -78,53 +80,27 @@ class BUCKET_MJSurvival(Survival):
 
             bucket_indices = np.digitize(F[:, j], bins=buckets_intervals) - 1 # Usiamo digitize per assegnare le soluzioni ad ogni bucket (-1 perché digitize restituisce bin da 1 a N)
             
-            bucket_indices = np.clip(bucket_indices, 0, self.buckets - 1) # Clip per sicurezza (in caso di valori esattamente uguali a ideal) (da 0 a n_buckets - 1)
+            bucket_indices = np.clip(bucket_indices, 0, self.buckets - 1) # Clip per sicurezza (in caso di valori esattamente uguali a ideal) 
 
             bucket_matrix[:, j] = bucket_indices
 
         return bucket_matrix
 
-    def _calc_crowding_distance(self, F):
-        n_obj = F.shape[1]
-        
-        I = np.argsort(F, axis=0) # sort each column and get index
-        
-        F = F[I, np.arange(n_obj)] # sort the objective space values for the whole matrix
-        
-        dist = np.row_stack([F, np.full(n_obj, np.inf)]) - np.row_stack([np.full(n_obj, -np.inf), F]) # calculate the distance from each point to the last and next
-
-        # calculate the norm for each objective - set to NaN if all values are equal
-        norm = np.max(F, axis=0) - np.min(F, axis=0)
-        norm[norm == 0] = np.nan
-
-        # prepare the distance to last and next vectors
-        dist_to_last, dist_to_next = dist, np.copy(dist)
-        dist_to_last, dist_to_next = dist_to_last[:-1] / norm, dist_to_next[1:] / norm
-
-        # if we divide by zero because all values in one columns are equal replace by none
-        dist_to_last[np.isnan(dist_to_last)] = 0.0
-        dist_to_next[np.isnan(dist_to_next)] = 0.0
-
-        # sum up the distance to next and last and norm by objectives - also reorder from sorted list
-        J = np.argsort(I, axis=0)
-        cd = np.sum(dist_to_last[J, np.arange(n_obj)] + dist_to_next[J, np.arange(n_obj)], axis=1) / n_obj
-
-        return cd
-
     def _sort_within_buckets(self, F, bucket_matrix):
         sorted_indices = []
 
-        unique_buckets, inverse_indices = np.unique(bucket_matrix, axis=0, return_inverse=True)
+        inverse_indices = np.unique(bucket_matrix, axis=0, return_inverse=True)[1] # Dati i vettori di ogni soluzione, restituisce gli indici dei bucket a cui appartengono
 
-        for i in range(len(unique_buckets)):
-            group_indices = np.where(inverse_indices == i)[0]
+        for i in range(len(inverse_indices)):
+            bucket_indices = np.where(inverse_indices == i)[0] # Procediamo con ordine, da 0 a N-1, per ogni bucket
 
-            if len(group_indices) <= 2:
-                sorted_indices.extend(group_indices.tolist())
-            else:
-                cd = self._calc_crowding_distance(F[group_indices])
+            if len(bucket_indices) > 2:
+                cd = calc_crowding_distance(F[bucket_indices])
                 order = np.argsort(-cd)
-                sorted_indices.extend(group_indices[order].tolist())
+            else:
+                order = np.arange(len(bucket_indices)) # Se ci sono 2 o meno soluzioni, non serve ordinare
+
+            sorted_indices.extend(bucket_indices[order].tolist())
 
         return F[sorted_indices] # Ordina F secondo gli indici ottenuti
 
@@ -137,34 +113,32 @@ class BUCKET_MJSurvival(Survival):
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
         ideal, nadir = self._calc_ideal_nadir_points(F)
-
         bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir) # bucket_matrix --> Righe: popolazione, colonne: vettore
-
-        crowded_sorted = self._sort_within_buckets(F, bucket_matrix)
+        candidate_sorted = self._sort_within_buckets(F, bucket_matrix)
         
-        candidate_sorted = np.argsort(crowded_sorted, axis=0)
+        #candidate_sorted = np.argsort(crowded_sorted, axis=0)
 
         leaderboard = self.MJ(candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
-        if gen == 2:
-            import sys
-            np.set_printoptions(threshold=sys.maxsize)
-            print(f"Gen {gen} ideal: {ideal}")
-            print(f"Gen {gen} nadir: {nadir}")
-            print(f"Gen {gen} F: {F[1]}")
-            print(f"Gen {gen} bucket matrix: {bucket_matrix}")
-            print(f"Gen {gen} candidate sorted: {candidate_sorted}")
-            print(f"Gen {gen} leaderboard: {leaderboard}")
+        # if gen == 1000:
+        #     # import sys
+        #     # np.set_printoptions(threshold=sys.maxsize)
+        #     print(f"Gen {gen} ideal: {ideal}")
+        #     print(f"Gen {gen} nadir: {nadir}")
+        #     print(f"Gen {gen} F: {F[1]}")
+        #     print(f"Gen {gen} bucket matrix: {bucket_matrix}")
+        #     print(f"Gen {gen} candidate sorted: {candidate_sorted}")
+        #     print(f"Gen {gen} leaderboard: {leaderboard}")
 
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 
-        if not self.use_MJ_algorithm:
-            fronts, rank = NonDominatedSorting().do(F, return_rank=True)
-            pop.set("rank", rank)
-            self.opt = pop[fronts[0]] # Per NSGA3
+        # if not self.use_MJ_algorithm:
+        #     fronts, rank = NonDominatedSorting().do(F, return_rank=True)
+        #     pop.set("rank", rank)
+        #     self.opt = pop[fronts[0]] # Per NSGA3
 
-            crowding = np.full(len(pop), np.nan)
-            pop.set("crowding", crowding)
+        #     crowding = np.full(len(pop), np.nan)
+        #     pop.set("crowding", crowding)
  
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
 

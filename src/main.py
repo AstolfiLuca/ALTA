@@ -29,15 +29,14 @@ from test.wfg import test_wfg
 1: otteniamo il nadir (attuale, mix del valore migliore tra quelli che abbiamo) e ideal (idem)
 2: utilizza vari bucket 5
 3: uso il bucket per fare rank
-E QUESTO PERCHè EVITO DI FARE 
 
 
 Per evitare di avere troppe soluzioni nella stessa regione è utilizzare:
 - rank di MJ 
 - crowding distance di NSGA2 (in caso di pareggio tra le ultime)
 
-utilizza vettore/norma
-- memorizzo lo storico dei valori (per debug<)
+Utilizza vettore/norma
+- memorizzo lo storico dei valori (per debug)
 
 
 prove con 6/7 obj
@@ -53,7 +52,7 @@ generazione successiva in un algoritmo di genetic programming ma nel caso multio
 
 #@realtimer
 def main():
-    n_gen = 400 # Mantieni 400-600 
+    n_gen = 600 # Mantieni 400-600 
     n_obj = 6 # Mantieni 6-7
     #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
     seed = 1
@@ -81,7 +80,6 @@ def main():
         #"RVEA": RVEA(ref_dirs=ref_dirs)
     }
 
-
     results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed) 
     #performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=False, print_performance=True)
     stamp_results(results, radviz=True)
@@ -91,6 +89,15 @@ def main():
 
     #streaming(problem, algorithms, n_gen=n_gen) # WIP
 
+
+    # for problem_id in range(1, 6):
+    #     problem_name = f"dtlz{problem_id}"
+
+    #     problem = get_problem(problem_name, n_obj=n_obj)
+        
+    #     for seed_id in range(1, 6):
+    #         results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed_id) 
+    #         stamp_results(results, title=f"{problem_name}_seed{seed_id}", radviz=True, save_file=True)
 
 if __name__ == "__main__":
     main()
