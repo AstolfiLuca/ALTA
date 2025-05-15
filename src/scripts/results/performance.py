@@ -20,6 +20,8 @@ def performance(results, name, pareto_front_problem = None, normalized=False, pr
     else:
         if name == "gd":
             ind = GD(pareto_front_problem)
+
+            # CREA UN GRAFICO DOVE SI MOSTRA, PER OGNI F, (OGNI 1-5 GENERAZIONI), QUANTO VALE LA GD NEL TEMPO  
         
         elif name == "gd+":
             ind = GDPlus(pareto_front_problem)

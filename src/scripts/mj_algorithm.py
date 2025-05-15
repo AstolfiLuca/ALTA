@@ -60,7 +60,7 @@ class BUCKET_MJSurvival(Survival):
 
         n_obj = F.shape[1]
 
-        ideal = np.zeros(n_obj)
+        ideal = np.zeros(n_obj) # PROVA ANCHE CON 0
         nadir = np.zeros(n_obj)
 
         for i in range(n_obj):
@@ -89,6 +89,8 @@ class BUCKET_MJSurvival(Survival):
     def _sort_within_buckets(self, F, bucket_matrix):
         sorted_indices = []
 
+        # Va fatto solo sui 3/4 sul limite INVERTILA CON IL MAJORITY JUDGMENT
+
         inverse_indices = np.unique(bucket_matrix, axis=0, return_inverse=True)[1] # Dati i vettori di ogni soluzione, restituisce gli indici dei bucket a cui appartengono
 
         for i in range(len(inverse_indices)):
@@ -102,7 +104,7 @@ class BUCKET_MJSurvival(Survival):
 
             sorted_indices.extend(bucket_indices[order].tolist())
 
-        return F[sorted_indices] # Ordina F secondo gli indici ottenuti
+        return bucket_matrix[sorted_indices] # Ordina F secondo gli indici ottenuti
 
 
 
@@ -120,15 +122,17 @@ class BUCKET_MJSurvival(Survival):
 
         leaderboard = self.MJ(candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
-        # if gen == 1000:
-        #     # import sys
-        #     # np.set_printoptions(threshold=sys.maxsize)
-        #     print(f"Gen {gen} ideal: {ideal}")
-        #     print(f"Gen {gen} nadir: {nadir}")
-        #     print(f"Gen {gen} F: {F[1]}")
-        #     print(f"Gen {gen} bucket matrix: {bucket_matrix}")
-        #     print(f"Gen {gen} candidate sorted: {candidate_sorted}")
-        #     print(f"Gen {gen} leaderboard: {leaderboard}")
+        # LA CROWDING DISTANCE VA FATTA QUI
+
+        if gen == 600:
+            import sys
+            np.set_printoptions(threshold=sys.maxsize)
+            print(f"Gen {gen} ideal: {ideal}")
+            print(f"Gen {gen} nadir: {nadir}")
+            print(f"Gen {gen} F: {F[1]}")
+            print(f"Gen {gen} bucket matrix: {bucket_matrix}")
+            print(f"Gen {gen} candidate sorted: {candidate_sorted}")
+            print(f"Gen {gen} leaderboard: {leaderboard}")
 
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 

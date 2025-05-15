@@ -55,6 +55,7 @@ def main():
     n_gen = 600 # Mantieni 400-600 
     n_obj = 6 # Mantieni 6-7
     #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
+
     seed = 1
 
     #ref_dirs = get_reference_directions("das-dennis", n_dim=n_obj, n_partitions=n_obj + 2) # se ref_dirs > pop_size, il numero della popolazione aumenta in base ad esse
