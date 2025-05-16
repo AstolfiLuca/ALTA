@@ -18,43 +18,16 @@ from scripts.results.stamp_results import stamp_results
 from scripts.results.performance import performance
 from scripts.timer import realtimer
 from scripts.results.get_results import get_results
-from scripts.results.graphic_visualization import streaming
 
 from test.phi_matrices import get_phi_matrices, get_random_phi_matrices
 from test.dtlz import test_dtlz
 from test.wfg import test_wfg
 
-
-"""
-1: otteniamo il nadir (attuale, mix del valore migliore tra quelli che abbiamo) e ideal (idem)
-2: utilizza vari bucket 5
-3: uso il bucket per fare rank
-
-
-Per evitare di avere troppe soluzioni nella stessa regione è utilizzare:
-- rank di MJ 
-- crowding distance di NSGA2 (in caso di pareggio tra le ultime)
-
-Utilizza vettore/norma
-- memorizzo lo storico dei valori (per debug)
-
-
-prove con 6/7 obj
-
-------------------------------
-
-Implementazione di un algoritmo (majority judjment) che serve per selezionare le soluzioni da mantenere alla 
-generazione successiva in un algoritmo di genetic programming ma nel caso multiobiettivo
-
-"""
-
-
-
 #@realtimer
 def main():
     n_gen = 600 # Mantieni 400-600 
     n_obj = 6 # Mantieni 6-7
-    #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1
+    #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1gd
 
     seed = 1
 
@@ -82,13 +55,14 @@ def main():
     }
 
     results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed) 
-    #performance(results, name="gd+", pareto_front_problem=pareto_front_problem, normalized=False, print_performance=True)
-    stamp_results(results, radviz=True)
+    #performance(results, name="gd+", pareto_front_points=pareto_front_problem, normalized=False, print_performance=True)
+    #stamp_results(results, radviz=True)
     
     # n = [2, 6]
     # test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, var=True, n=n, tight_layout=True)
 
     #streaming(problem, algorithms, n_gen=n_gen) # WIP
+    
 
 
     # for problem_id in range(1, 6):

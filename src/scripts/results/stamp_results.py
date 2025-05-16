@@ -31,7 +31,6 @@ def stamp_results(results, title="default_title", scatter=False, radviz=False, a
         plot = Radviz(title=title, legend=True)
         
         for index, (name, res) in enumerate(results.items()):
-            #print(len(res.F))
             plot.add(res.F, label=name, color=colors[index])
         
         if save_file:

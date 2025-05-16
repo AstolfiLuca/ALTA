@@ -21,6 +21,22 @@ class MJSurvival(Survival):
 
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
         self.use_MJ_algorithm = use_MJ_algoritm
+    
+    def _calc_ideal_nadir_points(self, F, zero_ideal=False): # Punto con valori minimi per ogni obiettivo
+        if F is None or len(F) == 0:
+            return np.array([])
+
+        n_obj = F.shape[1]
+
+        ideal = np.zeros(n_obj)
+        nadir = np.zeros(n_obj)
+
+        for i in range(n_obj):
+            if not zero_ideal:
+                ideal[i] = np.min(F[:, i])
+            nadir[i] = np.max(F[:, i])
+
+        return ideal, nadir
 
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
@@ -32,15 +48,25 @@ class MJSurvival(Survival):
         
         leaderboard = self.MJ(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
+
+        ideal, nadir = self._calc_ideal_nadir_points(F)
+        if (gen % 100 == 0):
+            from pymoo.indicators.gd_plus import GDPlus
+            pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
+            F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
+            
+            ind = GDPlus(pareto_front_points)
+            print(f"GD Gen {gen}: {ind(F_selected)}")
+
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 
-        if self.use_MJ_algorithm:
-            fronts, rank = NonDominatedSorting().do(F, return_rank=True)
-            pop.set("rank", rank)
-            self.opt = pop[fronts[0]] # Per NSGA3
+        # if self.use_MJ_algorithm:
+        #     fronts, rank = NonDominatedSorting().do(F, return_rank=True)
+        #     pop.set("rank", rank)
+        #     self.opt = pop[fronts[0]] # Per NSGA3
 
-            crowding = np.full(len(pop), np.nan)
-            pop.set("crowding", crowding)
+        #     crowding = np.full(len(pop), np.nan)
+        #     pop.set("crowding", crowding)
  
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
     
@@ -54,22 +80,20 @@ class BUCKET_MJSurvival(Survival):
         self.use_MJ_algorithm = use_MJ_algoritm
         self.buckets = buckets
 
-    def _calc_ideal_nadir_points(self, F): # Punto con valori minimi per ogni obiettivo
+    def _calc_ideal_nadir_points(self, F, zero_ideal=False): # Punto con valori minimi per ogni obiettivo
         if F is None or len(F) == 0:
             return np.array([])
 
         n_obj = F.shape[1]
 
-        ideal = np.zeros(n_obj) # PROVA ANCHE CON 0
+        ideal = np.zeros(n_obj)
         nadir = np.zeros(n_obj)
 
         for i in range(n_obj):
-            best_idx = np.argmin(F[:, i])
-            ideal[i] = F[best_idx, i]
+            if not zero_ideal:
+                ideal[i] = np.min(F[:, i])
+            nadir[i] = np.max(F[:, i])
 
-            worst_idx = np.argmax(F[:, i])
-            nadir[i] = F[worst_idx, i]
-        
         return ideal, nadir
 
     def _assign_solutions_to_buckets(self, F, ideal, nadir): # Ritorna una matrice (pop_size, n_obj) con i bucket assegnati ad ogni soluzione (divisione da nadir a ideal)
@@ -86,63 +110,40 @@ class BUCKET_MJSurvival(Survival):
 
         return bucket_matrix
 
-    def _sort_within_buckets(self, F, bucket_matrix):
-        sorted_indices = []
-
-        # Va fatto solo sui 3/4 sul limite INVERTILA CON IL MAJORITY JUDGMENT
-
-        inverse_indices = np.unique(bucket_matrix, axis=0, return_inverse=True)[1] # Dati i vettori di ogni soluzione, restituisce gli indici dei bucket a cui appartengono
-
-        for i in range(len(inverse_indices)):
-            bucket_indices = np.where(inverse_indices == i)[0] # Procediamo con ordine, da 0 a N-1, per ogni bucket
-
-            if len(bucket_indices) > 2:
-                cd = calc_crowding_distance(F[bucket_indices])
-                order = np.argsort(-cd)
-            else:
-                order = np.arange(len(bucket_indices)) # Se ci sono 2 o meno soluzioni, non serve ordinare
-
-            sorted_indices.extend(bucket_indices[order].tolist())
-
-        return bucket_matrix[sorted_indices] # Ordina F secondo gli indici ottenuti
-
-
-
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
         gen = algorithm.n_gen
-        #print(f"{gen}: ") 
-        
-        F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
+
+        F = pop.get("F")  
 
         ideal, nadir = self._calc_ideal_nadir_points(F)
-        bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir) # bucket_matrix --> Righe: popolazione, colonne: vettore
-        candidate_sorted = self._sort_within_buckets(F, bucket_matrix)
+
+        bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir)
+
+        candidate_sorted = self.MJ(bucket_matrix)  # pile_MJ o standard_MJ
+
+        crowding_distances_order = calc_crowding_distance(F[candidate_sorted]) # Non c'è bisogno di calcolare il crowding distance per ogni front, perchè useremo solo i candidati ordinati
+
+        leaderboard = np.lexsort((-crowding_distances_order, candidate_sorted))  # Ordina prima per MJ, poi per crowding distance 
         
-        #candidate_sorted = np.argsort(crowded_sorted, axis=0)
 
-        leaderboard = self.MJ(candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
-        
-        # LA CROWDING DISTANCE VA FATTA QUI
+        if (gen % 100 == 0):
+            from pymoo.indicators.gd_plus import GDPlus
+            pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
+            F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
+            
+            ind = GDPlus(pareto_front_points)
+            print(f"GD Gen {gen}: {ind(F_selected)}")
 
-        if gen == 600:
-            import sys
-            np.set_printoptions(threshold=sys.maxsize)
-            print(f"Gen {gen} ideal: {ideal}")
-            print(f"Gen {gen} nadir: {nadir}")
-            print(f"Gen {gen} F: {F[1]}")
-            print(f"Gen {gen} bucket matrix: {bucket_matrix}")
-            print(f"Gen {gen} candidate sorted: {candidate_sorted}")
-            print(f"Gen {gen} leaderboard: {leaderboard}")
-
-        # print(leaderboard)
-        # print(leaderboard[:n_survive]) 
-        # if not self.use_MJ_algorithm:
-        #     fronts, rank = NonDominatedSorting().do(F, return_rank=True)
-        #     pop.set("rank", rank)
-        #     self.opt = pop[fronts[0]] # Per NSGA3
-
-        #     crowding = np.full(len(pop), np.nan)
-        #     pop.set("crowding", crowding)
+        # if gen == 1000:
+        #     import sys
+        #     np.set_printoptions(threshold=sys.maxsize)
+            #print(f"Gen {gen} F: {F[1]}")
+            #print(f"Gen {gen} ideal: {ideal}")
+            #print(f"Gen {gen} nadir: {nadir}")
+            #print(f"Gen {gen} bucket matrix: {bucket_matrix}")
+            #print(f"Gen {gen} candidate sorted: {candidate_sorted}")
+            #print(f"Gen {gen} crowding distances: {crowding_distances_order}")
+            #print(f"Gen {gen} leaderboard: {leaderboard}")
  
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
 

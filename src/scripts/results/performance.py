@@ -8,7 +8,7 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
 from pymoo.util.normalization import normalize
 
-def performance(results, name, pareto_front_problem = None, normalized=False, print_performance=False):
+def performance(results, name, pareto_front_points = None, normalized=False, print_performance=False):
     if name == "hv":
         all_F = np.vstack([res.F for res in results.values()])
         worst = np.max(all_F, axis=0)
@@ -19,12 +19,12 @@ def performance(results, name, pareto_front_problem = None, normalized=False, pr
         ind = HV(ref_point=ref_point)
     else:
         if name == "gd":
-            ind = GD(pareto_front_problem)
+            ind = GD(pareto_front_points)
 
             # CREA UN GRAFICO DOVE SI MOSTRA, PER OGNI F, (OGNI 1-5 GENERAZIONI), QUANTO VALE LA GD NEL TEMPO  
         
         elif name == "gd+":
-            ind = GDPlus(pareto_front_problem)
+            ind = GDPlus(pareto_front_points)
 
     performance = [ind(res.F) for res in results.values()]
 
