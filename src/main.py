@@ -27,7 +27,7 @@ from test.wfg import test_wfg
 def main():
     n_gen = 600 # Mantieni 400-600 
     n_obj = 6 # Mantieni 6-7
-    #n_var = n_obj + 9 # Per DTLZ: n_var = n_obj + k - 1gd
+    #n_var = n_obj + 2 # Per DTLZ: n_var = n_obj + k - 1
 
     seed = 1
 
@@ -55,15 +55,11 @@ def main():
     }
 
     results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed) 
-    #performance(results, name="gd+", pareto_front_points=pareto_front_problem, normalized=False, print_performance=True)
+    performance(results, name="gd+", pareto_front_points=None, print_performance=True, print_graph=True)
     #stamp_results(results, radviz=True)
     
     # n = [2, 6]
     # test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, var=True, n=n, tight_layout=True)
-
-    #streaming(problem, algorithms, n_gen=n_gen) # WIP
-    
-
 
     # for problem_id in range(1, 6):
     #     problem_name = f"dtlz{problem_id}"

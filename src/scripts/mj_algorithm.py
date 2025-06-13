@@ -14,6 +14,8 @@ from pymoo.operators.survival.rank_and_crowding.metrics import calc_crowding_dis
 from scripts.mj.standard_mj import majority_judgment as standard_MJ
 from scripts.mj.pile_mj import majority_judgment as pile_MJ
 
+from pymoo.indicators.gd_plus import GDPlus
+
 class MJSurvival(Survival):
     def __init__(self, filter_infeasible=False, use_MJ_pile=True, use_MJ_algoritm=True):
         super().__init__(filter_infeasible)
@@ -49,14 +51,14 @@ class MJSurvival(Survival):
         leaderboard = self.MJ(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
         
 
-        ideal, nadir = self._calc_ideal_nadir_points(F)
-        if (gen % 100 == 0):
-            from pymoo.indicators.gd_plus import GDPlus
-            pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
-            F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
-            
-            ind = GDPlus(pareto_front_points)
-            print(f"GD Gen {gen}: {ind(F_selected)}")
+        # ideal, nadir = self._calc_ideal_nadir_points(F)
+
+        # pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
+        
+        # F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
+        
+        # ind = GDPlus(pareto_front_points)
+        
 
         # print(leaderboard)
         # print(leaderboard[:n_survive]) 
@@ -79,6 +81,7 @@ class BUCKET_MJSurvival(Survival):
         self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
         self.use_MJ_algorithm = use_MJ_algoritm
         self.buckets = buckets
+        
 
     def _calc_ideal_nadir_points(self, F, zero_ideal=False): # Punto con valori minimi per ogni obiettivo
         if F is None or len(F) == 0:
@@ -126,13 +129,14 @@ class BUCKET_MJSurvival(Survival):
         leaderboard = np.lexsort((-crowding_distances_order, candidate_sorted))  # Ordina prima per MJ, poi per crowding distance 
         
 
-        if (gen % 100 == 0):
-            from pymoo.indicators.gd_plus import GDPlus
-            pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
-            F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
-            
-            ind = GDPlus(pareto_front_points)
-            print(f"GD Gen {gen}: {ind(F_selected)}")
+        
+
+        # pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
+        
+        # F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
+        
+        # ind = GDPlus(pareto_front_points)
+
 
         # if gen == 1000:
         #     import sys
@@ -158,22 +162,19 @@ class MJAlgorithm(GeneticAlgorithm):
                  eliminate_duplicates=False,
                  n_offsprings=None,
                  output=MultiObjectiveOutput(),
+
                  use_MJ_pile=True,
                  buckets=None,
-                 **kwargs
-                 ):
+                 
+                 **kwargs):
 
-        super().__init__(pop_size=pop_size, 
-                         sampling=sampling, 
-                         selection=selection, 
-                         crossover=crossover, 
-                         mutation=mutation, 
-                         eliminate_duplicates=eliminate_duplicates, 
-                         n_offsprings=n_offsprings, 
-                         output=output, 
-                         **kwargs)
-
+        super().__init__(pop_size=pop_size, sampling=sampling, selection=selection, crossover=crossover, mutation=mutation, eliminate_duplicates=eliminate_duplicates, n_offsprings=n_offsprings, output=output, **kwargs)
+        
         if buckets:
             self.survival = BUCKET_MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True, buckets=buckets)
         else:
             self.survival = MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True)
+        
+
+
+        
