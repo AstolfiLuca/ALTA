@@ -11,7 +11,6 @@ def get_results(problem, algorithms, n_gen, save_history=False, print_name=False
         if print_name:
             print(name) 
 
-
     return results
 
 

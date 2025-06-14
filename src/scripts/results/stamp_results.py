@@ -5,27 +5,36 @@ from pymoo.visualization.radviz import Radviz
 
 import matplotlib
 matplotlib.use("QtAgg")
+import matplotlib.pyplot as plt
 
 def get_colors(n_res):
     return [colorsys.hsv_to_rgb(i / n_res, 1, 1) for i in range(n_res)]
 
-def stamp_gd_results(named_gd_values):
+def stamp_gd_results(all_gd_values, plus=False):
     n_res = len(all_gd_values)
-
     colors = get_colors(n_res)
 
     plt.figure()
     
-    for i, (gd_values, name) in enumerate(named_gd_values.items()):
+    for i, (name, gd_values) in enumerate(all_gd_values.items()):
         plt.plot(range(len(gd_values)), gd_values, marker='', color=colors[i], label=name, linewidth=2)
-    
+        # Linea retta della media
+        mean_val = sum(gd_values) / len(gd_values)
+        plt.hlines(mean_val, 0, len(gd_values)-1, colors=colors[i], linestyles='dashed', linewidth=1.5, label=f"{name} media")
+
     plt.xlabel("Generazione")
-    plt.ylabel("GD+")
-    plt.title("Andamento GD+ per generazione")
+    if plus:
+        plt.ylabel("GD+")
+        plt.title("Andamento GD+ per generazione")
+    else:
+        plt.ylabel("GD")
+        plt.title("Andamento GD per generazione")
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
     plt.show()
+
+    
 
 
 def stamp_results(results, title="default_title", scatter=False, radviz=False, ax=None, save_file=False, no_plot=False):

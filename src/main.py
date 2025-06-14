@@ -13,9 +13,9 @@ from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.algorithms.moo.rvea import RVEA
 
-from scripts.mj_algorithm import *
-from scripts.results.stamp_results import stamp_results
-from scripts.results.performance import performance
+from scripts.mj_pymoo import *
+from scripts.results.stamp_results import stamp_results, stamp_gd_results
+from scripts.results.performance import performance, get_pareto_front_points, get_all_gd_values
 from scripts.timer import realtimer
 from scripts.results.get_results import get_results
 
@@ -54,9 +54,14 @@ def main():
         #"RVEA": RVEA(ref_dirs=ref_dirs)
     }
 
-    results = get_results(problem, algorithms, n_gen, print_name=True, seed=seed) 
-    performance(results, name="gd+", pareto_front_points=None, print_performance=True, print_graph=True)
+    results = get_results(problem, algorithms, n_gen, save_history=True, print_name=True, seed=seed) 
+
+    #performance(results, "gd+", problem, print_performance=True)
     #stamp_results(results, radviz=True)
+    
+    use_gd_plus = True
+    all_gd_values = get_all_gd_values(results, plus=use_gd_plus)
+    stamp_gd_results(all_gd_values, plus=use_gd_plus)
     
     # n = [2, 6]
     # test_dtlz(algorithms, n_gen=n_gen, n_obj=n_obj, var=True, n=n, tight_layout=True)

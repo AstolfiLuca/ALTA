@@ -8,13 +8,10 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.util.display.multi import MultiObjectiveOutput
 from pymoo.core.survival import Survival
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-
 from pymoo.operators.survival.rank_and_crowding.metrics import calc_crowding_distance
 
 from scripts.mj.standard_mj import majority_judgment as standard_MJ
 from scripts.mj.pile_mj import majority_judgment as pile_MJ
-
-from pymoo.indicators.gd_plus import GDPlus
 
 class MJSurvival(Survival):
     def __init__(self, filter_infeasible=False, use_MJ_pile=True, use_MJ_algoritm=True):
