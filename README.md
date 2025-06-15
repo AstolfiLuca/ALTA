@@ -47,11 +47,13 @@ All resources in the "academic_resourses" folder belong to the orinal authors of
 │   └── screenshot
 ├── README.md
 ├── requirements.txt
-└── src
-    ├── main.py
-    ├── scripts
-    └── test
+├── src
+│   ├── main.py
+│   ├── scripts
+│   └── test
+└── .vscode
+    └── settings.json
 
-12 directories, 8 files
+13 directories, 9 files
 ```
 <!-- FILETREE END -->

@@ -1,40 +1,56 @@
-import matplotlib.pyplot as plt
 import math
+import matplotlib.pyplot as plt
 
 from pymoo.problems import get_problem
-
-from test.phi_matrices import *
-from scripts.results.stamp_results import stamp_results
 from scripts.results.get_results import get_results
+from scripts.results.stamp_results import stamp_results
 
-def test_dtlz(algorithms, n_gen=200, n_obj=5, n=range(7), var=False, print_name=True, tight_layout=False):
-    n_problems = len(n)
+def do_dtlz(problem_num, algorithms, n_gen, n_obj, seed=1, ax=None, save_file=False, verbose=False):
+    problem_name = f"dtlz{problem_num}"
+
+    problem = get_problem(problem_name, n_obj=n_obj)        
+    
+    results = get_results(problem, algorithms, n_gen, verbose=verbose, seed=seed) 
+
+    stamp_results(results, title=f"{problem_name}_seed{seed}", radviz=True, save_file=save_file, ax=ax)
+
+
+def test_dtlz(dtlz_idx, algorithms, n_gen, n_obj, verbose=True):
+    n_problems = len(dtlz_idx)
+
     columns = math.ceil(math.sqrt(n_problems))
     rows = math.ceil(n_problems / columns)
 
-    n_var = 0
-    if var:
-        n_var = n_obj + 9
-    
     fig, axs = plt.subplots(rows, columns, figsize=(14, 10))
-    if n_problems > 1:  
-        axs = axs.flatten()
-    else:
-        axs = [axs]  # Handle the single subplot case
         
     fig.suptitle(f"DLTZ | n_gen={n_gen} | n_obj={n_obj}", fontsize=16)
-    
-    for i, problem_num in enumerate(n):
-        problem_name = f"dtlz{problem_num}"
 
-        results = get_results(get_problem(problem_name, n_obj=n_obj, n_var=n_var), algorithms, n_gen, print_name=print_name)
-        
-        stamp_results(results, title=problem_name, radviz=True, ax=axs[i])
+    if n_problems > 1:  
+        axs = axs.flatten()
+    else: # Gestione caso singolo 
+        axs = [axs] 
     
+    # Eseguiamo i problemi DTLZ
+    for i, problem_num in enumerate(dtlz_idx):
+        do_dtlz(problem_num, algorithms, n_gen, n_obj, ax=axs[i], save_file=False, verbose=verbose)
+
+        axs[i].set_title(f"DTLZ {dtlz_idx[i]}", fontsize=14)
+
+        if verbose:
+            print(f"DTLZ {problem_num} done")
+
+    # Nascondiamo gli assi non utilizzati
     for i in range(n_problems, len(axs)):
         axs[i].set_visible(False)
     
-    if tight_layout:
-        plt.tight_layout()
-
+    plt.tight_layout()
     plt.show()
+
+
+def save_img_dtlz(dtlz_idx, seed_idx, algorithms, n_gen, n_obj, verbose=True):
+    for seed in seed_idx:
+        for problem_num in dtlz_idx:
+            do_dtlz(problem_num, algorithms, n_gen, n_obj, seed, save_file=True, verbose=verbose)
+
+
+

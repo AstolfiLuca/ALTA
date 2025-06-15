@@ -18,54 +18,18 @@ class MJSurvival(Survival):
         super().__init__(filter_infeasible)
         self.opt = None
 
-        self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
-        self.use_MJ_algorithm = use_MJ_algoritm
-    
-    def _calc_ideal_nadir_points(self, F, zero_ideal=False): # Punto con valori minimi per ogni obiettivo
-        if F is None or len(F) == 0:
-            return np.array([])
+        if use_MJ_pile:
+            self.MJ = pile_MJ
+        else:   
+            self.MJ = standard_MJ  
 
-        n_obj = F.shape[1]
-
-        ideal = np.zeros(n_obj)
-        nadir = np.zeros(n_obj)
-
-        for i in range(n_obj):
-            if not zero_ideal:
-                ideal[i] = np.min(F[:, i])
-            nadir[i] = np.max(F[:, i])
-
-        return ideal, nadir
-
+    # Applica majority judgment (MJ)
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
-        gen = algorithm.n_gen
-        #print(f"{gen}: ") 
-        
         F = pop.get("F")  # Matrice delle funzioni obiettivo, dimensione (n_pop, n_obj)
 
         F_candidate_sorted = np.argsort(F, axis=0) # Ordino gli indici 
         
         leaderboard = self.MJ(F_candidate_sorted) # pile_MJ if use_MJ_pile else standard_MJ  
-        
-
-        # ideal, nadir = self._calc_ideal_nadir_points(F)
-
-        # pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
-        
-        # F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
-        
-        # ind = GDPlus(pareto_front_points)
-        
-
-        # print(leaderboard)
-        # print(leaderboard[:n_survive]) 
-        # if self.use_MJ_algorithm:
-        #     fronts, rank = NonDominatedSorting().do(F, return_rank=True)
-        #     pop.set("rank", rank)
-        #     self.opt = pop[fronts[0]] # Per NSGA3
-
-        #     crowding = np.full(len(pop), np.nan)
-        #     pop.set("crowding", crowding)
  
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
     
@@ -75,12 +39,15 @@ class BUCKET_MJSurvival(Survival):
         super().__init__(filter_infeasible)
         self.opt = None
         
-        self.MJ = pile_MJ if use_MJ_pile else standard_MJ  
-        self.use_MJ_algorithm = use_MJ_algoritm
-        self.buckets = buckets
-        
+        if use_MJ_pile:
+            self.MJ = pile_MJ
+        else:   
+            self.MJ = standard_MJ
 
-    def _calc_ideal_nadir_points(self, F, zero_ideal=False): # Punto con valori minimi per ogni obiettivo
+        self.buckets = buckets
+    
+    # Calcola i punti ideal e nadir per ogni obiettivo (ideal: min, nadir: max)
+    def _calc_ideal_nadir_points(self, F, zero_ideal=False): 
         if F is None or len(F) == 0:
             return np.array([])
 
@@ -96,7 +63,8 @@ class BUCKET_MJSurvival(Survival):
 
         return ideal, nadir
 
-    def _assign_solutions_to_buckets(self, F, ideal, nadir): # Ritorna una matrice (pop_size, n_obj) con i bucket assegnati ad ogni soluzione (divisione da nadir a ideal)
+    # Ritorna una matrice (pop_size, n_obj) con i bucket assegnati ad ogni soluzione (divisione da nadir a ideal)
+    def _assign_solutions_to_buckets(self, F, ideal, nadir): 
         bucket_matrix = np.zeros(F.shape)
 
         for j in range(F.shape[1]):
@@ -110,42 +78,20 @@ class BUCKET_MJSurvival(Survival):
 
         return bucket_matrix
 
+    # Applica majority judgment (MJ) poi Crowding distance
     def _do(self, problem, pop, n_survive, algorithm=None, **kwargs):
-        gen = algorithm.n_gen
-
         F = pop.get("F")  
 
         ideal, nadir = self._calc_ideal_nadir_points(F)
 
         bucket_matrix = self._assign_solutions_to_buckets(F, ideal, nadir)
 
-        candidate_sorted = self.MJ(bucket_matrix)  # pile_MJ o standard_MJ
+        candidate_sorted = self.MJ(bucket_matrix)
 
         crowding_distances_order = calc_crowding_distance(F[candidate_sorted]) # Non c'è bisogno di calcolare il crowding distance per ogni front, perchè useremo solo i candidati ordinati
 
         leaderboard = np.lexsort((-crowding_distances_order, candidate_sorted))  # Ordina prima per MJ, poi per crowding distance 
         
-
-        
-
-        # pareto_front_points = (problem.pareto_front(ref_dirs=n_survive) - ideal) / (nadir - ideal) # NOTA IMPORTANTE: usiamo (x-ideal) / (nadir - ideal) invece della formula standard (x-nadir) / (ideal-nadir) perchè i punti sono invertiti (nadir>ideal)
-        
-        # F_selected = (pop[leaderboard[:n_survive]].get("F") - ideal) / (nadir - ideal)
-        
-        # ind = GDPlus(pareto_front_points)
-
-
-        # if gen == 1000:
-        #     import sys
-        #     np.set_printoptions(threshold=sys.maxsize)
-            #print(f"Gen {gen} F: {F[1]}")
-            #print(f"Gen {gen} ideal: {ideal}")
-            #print(f"Gen {gen} nadir: {nadir}")
-            #print(f"Gen {gen} bucket matrix: {bucket_matrix}")
-            #print(f"Gen {gen} candidate sorted: {candidate_sorted}")
-            #print(f"Gen {gen} crowding distances: {crowding_distances_order}")
-            #print(f"Gen {gen} leaderboard: {leaderboard}")
- 
         return pop[leaderboard[:n_survive]]  # Solo indici dei sopravvissuti, dal migliore al peggiore
 
 
@@ -161,17 +107,17 @@ class MJAlgorithm(GeneticAlgorithm):
                  output=MultiObjectiveOutput(),
 
                  use_MJ_pile=True,
-                 buckets=None,
+                 buckets=0,
                  
                  **kwargs):
 
         super().__init__(pop_size=pop_size, sampling=sampling, selection=selection, crossover=crossover, mutation=mutation, eliminate_duplicates=eliminate_duplicates, n_offsprings=n_offsprings, output=output, **kwargs)
         
-        if buckets:
-            self.survival = BUCKET_MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True, buckets=buckets)
+        if not buckets:
+            self.survival = MJSurvival(use_MJ_pile=use_MJ_pile)
         else:
-            self.survival = MJSurvival(use_MJ_pile=use_MJ_pile, use_MJ_algoritm=True)
-        
+            self.survival = BUCKET_MJSurvival(use_MJ_pile=use_MJ_pile, buckets=buckets)
+            
 
 
         

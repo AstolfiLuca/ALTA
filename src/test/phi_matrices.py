@@ -1,12 +1,19 @@
-# from scripts.MJ.pile_MJ import majority_judgment as standard_MJ
-    # from scripts.MJ.pile_MJ import majority_judgment as pile_MJ
-
-    # for phi_matrix in get_phi_matrices():
-    #     print(standard_MJ(phi_matrix))
-    #     print(pile_MJ(phi_matrix))
+from scripts.mj.standard_mj import majority_judgment as standard_MJ
+from scripts.mj.pile_mj import majority_judgment as pile_MJ
 
 # rows = candidates [M-Dmension] (solutions)
 # column = judjes [N-Dmension] (functions)
+def test_phi_matrices(random=False, n=1):
+    if random:
+        phi_matrices = get_random_phi_matrices(n=n)
+    else:
+        phi_matrices = get_phi_matrices()
+
+    for phi_matrix in phi_matrices:
+        print(standard_MJ(phi_matrix))
+        print(pile_MJ(phi_matrix))
+
+# --- predefined ---
 def get_phi_matrices():
     phi_matrices = []
 
@@ -114,7 +121,7 @@ def get_phi_matrices():
 
     return phi_matrices
 
-
+# --- random phi matrices ---
 def get_random_phi_matrices(n=1, n_candidates=10, n_judges=15, max_vote=10):
     import random
 

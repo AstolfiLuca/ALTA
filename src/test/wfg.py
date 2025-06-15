@@ -8,7 +8,7 @@ from test.phi_matrices import *
 from scripts.results.stamp_results import stamp_results
 from scripts.results.get_results import get_results
 
-def test_wfg(algorithms, n_gen=200, n_obj=5, n_var=10, k=4, n=range(9), print_name=True, tight_layout=False):
+def test_wfg(algorithms, n_gen=200, n_obj=5, n_var=10, k=4, n=range(9), verbose=True, tight_layout=False):
     n_problems = len(n)
     columns = math.ceil(math.sqrt(n_problems))
     rows = math.ceil(n_problems / columns)
@@ -24,7 +24,7 @@ def test_wfg(algorithms, n_gen=200, n_obj=5, n_var=10, k=4, n=range(9), print_na
     for i, problem_num in enumerate(n):
         problem_name = f"wfg{problem_num}"
 
-        results = get_results(get_problem(problem_name, n_var=n_var, n_obj=n_obj, k=k), algorithms, n_gen, print_name=print_name)
+        results = get_results(get_problem(problem_name, n_var=n_var, n_obj=n_obj, k=k), algorithms, n_gen, verbose=verbose)
         
         stamp_results(results, title=problem_name, radviz=True, ax=axs[i])
 
